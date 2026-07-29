@@ -1,0 +1,121 @@
+:root {
+  color-scheme: light;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #123f2c;
+  color: #18201b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  padding:
+    max(1.25rem, env(safe-area-inset-top))
+    max(1rem, env(safe-area-inset-right))
+    max(1.25rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 50% 20%, rgb(255 255 255 / 5%), transparent 45%),
+    #123f2c;
+}
+
+main {
+  width: 100%;
+}
+
+.game-panel {
+  padding: clamp(1.5rem, 7vw, 2.25rem);
+  border: 1px solid rgb(68 49 29 / 16%);
+  border-radius: 1.25rem;
+  background: #fffaf0;
+  box-shadow: 0 1rem 2.5rem rgb(0 0 0 / 22%);
+  text-align: center;
+}
+
+h1 {
+  margin: 0;
+  color: #173725;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.75rem, 14vw, 4.25rem);
+  line-height: 1;
+}
+
+.subtitle {
+  max-width: 27rem;
+  margin: 1rem auto 1.75rem;
+  color: #4d574f;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.actions {
+  display: grid;
+  gap: 0.875rem;
+}
+
+button {
+  width: 100%;
+  min-height: 3.5rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: #d9d5ca;
+  color: #66635d;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 1.75rem 0 0;
+  color: #38433b;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.status::before {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: #a35d23;
+  content: "";
+}
+
+.status[data-state="connected"]::before {
+  background: #23844d;
+}
+
+.status[data-state="reconnecting"]::before {
+  background: #c8891c;
+}
+
+.next-step {
+  margin: 0.75rem 0 0;
+  color: #6a706b;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+@media (min-width: 42rem) {
+  body {
+    padding: 3rem;
+  }
+
+  main {
+    max-width: 34rem;
+  }
+
+  .game-panel {
+    padding: 3rem;
+  }
+}
