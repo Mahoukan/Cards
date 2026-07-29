@@ -4,7 +4,9 @@ A mobile-first foundation for an online President card game designed for private
 
 ## Status
 
-The initial project foundation is in place: an Express server, Socket.IO connectivity, a health endpoint, and a simple responsive landing page. Rooms and game logic are not implemented yet.
+Stage 2 is complete: the project includes a documented, isolated President rules engine with deterministic deck utilities, legal-play validation, immutable single-round state transitions, role assignment, exchange planning, and automated tests.
+
+Rooms and multiplayer integration are not implemented yet. The rules engine is intentionally not connected to Express, Socket.IO, or the browser interface.
 
 ## Technology
 
@@ -40,6 +42,16 @@ npm run dev
 
 Then visit `http://localhost:3000`. The health check is available at `http://localhost:3000/health`.
 
+## Tests
+
+Run the complete rules-engine test suite with Node's built-in test runner:
+
+```bash
+npm test
+```
+
+No external testing framework is required.
+
 ## Production
 
 Start the production server:
@@ -65,9 +77,22 @@ card-game-place/
 │   └── index.html
 ├── src/
 │   ├── game/
-│   │   └── .gitkeep
+│   │   ├── constants.js
+│   │   ├── deck.js
+│   │   ├── gameEngine.js
+│   │   ├── index.js
+│   │   ├── roles.js
+│   │   └── rules.js
 │   └── rooms/
 │       └── .gitkeep
+├── docs/
+│   └── PRESIDENT_RULES.md
+├── tests/
+│   └── game/
+│       ├── deck.test.js
+│       ├── gameEngine.test.js
+│       ├── roles.test.js
+│       └── rules.test.js
 ├── .gitignore
 ├── .nvmrc
 ├── package.json
@@ -76,4 +101,4 @@ card-game-place/
 └── server.js
 ```
 
-Room creation, joining, card rules, and other game logic will be added in later stages.
+The agreed rules are documented in `docs/PRESIDENT_RULES.md`. Room creation, joining, and multiplayer integration will be added in later stages.

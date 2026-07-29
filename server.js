@@ -38,12 +38,26 @@ httpServer.listen(port, host, () => {
   console.log(`President server listening on port ${port}`);
 });
 
-const shutDown = (signal) => {
+let shutdownPromise = null;
+
+export const stopServer = (signal = "Shutdown") => {
+  if (shutdownPromise) {
+    return shutdownPromise;
+  }
+
   console.log(`${signal} received; shutting down`);
-  io.close(() => {
-    console.log("Server shut down");
+  shutdownPromise = new Promise((resolve) => {
+    io.close(() => {
+      console.log("Server shut down");
+      resolve();
+    });
   });
+  return shutdownPromise;
 };
 
-process.once("SIGINT", () => shutDown("SIGINT"));
-process.once("SIGTERM", () => shutDown("SIGTERM"));
+process.once("SIGINT", () => {
+  void stopServer("SIGINT");
+});
+process.once("SIGTERM", () => {
+  void stopServer("SIGTERM");
+});

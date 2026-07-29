@@ -1,0 +1,34 @@
+export const RANKS = Object.freeze([
+  "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A", "2",
+]);
+
+export const SUITS = Object.freeze([
+  "clubs", "diamonds", "hearts", "spades",
+]);
+
+export const THREE_OF_CLUBS_ID = "3-clubs";
+export const MIN_PLAYERS = 2;
+export const MAX_PLAYERS = 6;
+
+export const VALIDATION_CODES = Object.freeze({
+  EMPTY_SELECTION: "EMPTY_SELECTION",
+  DUPLICATE_CARD: "DUPLICATE_CARD",
+  CARD_NOT_OWNED: "CARD_NOT_OWNED",
+  MIXED_RANKS: "MIXED_RANKS",
+  NOT_YOUR_TURN: "NOT_YOUR_TURN",
+  WRONG_CARD_COUNT: "WRONG_CARD_COUNT",
+  RANK_NOT_HIGHER: "RANK_NOT_HIGHER",
+  OPENING_MUST_INCLUDE_3_OF_CLUBS: "OPENING_MUST_INCLUDE_3_OF_CLUBS",
+  CANNOT_PASS_EMPTY_PILE: "CANNOT_PASS_EMPTY_PILE",
+  PLAYER_ALREADY_FINISHED: "PLAYER_ALREADY_FINISHED",
+  PLAYER_NOT_FOUND: "PLAYER_NOT_FOUND",
+  ROUND_ALREADY_COMPLETE: "ROUND_ALREADY_COMPLETE",
+});
+
+export const ROLE_NAMES = Object.freeze({
+  PRESIDENT: "President",
+  VICE_PRESIDENT: "Vice President",
+  CITIZEN: "Citizen",
+  VICE_SCUM: "Vice Scum",
+  SCUM: "Scum",
+});
