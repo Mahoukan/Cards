@@ -1,5 +1,7 @@
 # Room system
 
+Production hardening: socket payloads are plain-object validated, unknown fields are discarded, strings are bounded, and ready values must be booleans. Mutating events use per-socket throttling and guarded acknowledgements. Only reconnect credentials are stored in the browser. Rooms remain in memory and reset on restart.
+
 ## Lifecycle
 
 `RoomManager` owns in-memory room objects. Rooms progress through `lobby`, `playing`, `round_complete`, and `exchange`:

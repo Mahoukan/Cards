@@ -1,5 +1,7 @@
 # Gameplay system
 
+Production hardening: Play and Pass use validated payloads, per-socket throttling, duplicate-submit locks, and acknowledgement timeouts while remaining server-authoritative. Controls disable while offline or resuming. `TURN_DURATION_MS` configures the turn timer.
+
 ## Automatic round start
 
 `GameCoordinator.maybeStart` starts exactly once when a lobby has at least two players and every seat is connected and ready. It snapshots stable player IDs and names, creates a shuffled round through the existing engine, changes the room to `playing`, clears ready flags, and creates the first deadline.

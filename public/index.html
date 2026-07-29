@@ -20,7 +20,7 @@
           </div>
           <p class="connection-status" data-connection data-state="disconnected" role="status" aria-live="polite">Disconnected</p>
           <p id="home-message" class="home-message" aria-live="polite"></p>
-          <p class="fine-print">Rooms are private and shared by link or short code. These room controls are a local prototype.</p>
+          <p class="fine-print">Rooms are private and shared by link or short code. Active rooms reset when the server restarts.</p>
         </div>
       </section>
 
@@ -85,11 +85,12 @@
           <div id="pile-cards" class="pile-cards"></div>
           <p id="pile-summary" class="pile-summary"></p>
         </section>
-        <section id="turn-panel" class="turn-panel" aria-live="polite">
+        <section id="turn-panel" class="turn-panel">
           <div><strong id="turn-message">Your turn</strong><span class="prototype-label">Local demo timer</span></div>
           <div class="timer"><span id="timer-value">0:30</span><div class="timer-track" aria-hidden="true"><span id="timer-bar"></span></div></div>
         </section>
-        <p id="game-notice" class="game-notice" aria-live="polite"></p>
+        <p id="game-notice" class="game-notice" role="status" aria-live="polite"></p>
+        <p id="game-announcement" class="visually-hidden" aria-live="polite"></p>
         <section class="hand-area" aria-labelledby="hand-heading">
           <div class="section-heading"><h3 id="hand-heading">Your hand</h3><span id="hand-count"></span></div>
           <div id="hand" class="hand" role="group" aria-label="Your cards"></div>

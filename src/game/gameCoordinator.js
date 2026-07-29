@@ -11,11 +11,11 @@ import { canPrepareNextRound, canRoomStart, createPublicRoomView } from "../room
 const failure = (code, message) => ({ ok: false, error: { code, message } });
 
 export class GameCoordinator {
-  constructor({ roomManager, now = Date.now, schedule = setTimeout, cancelSchedule = clearTimeout, random = Math.random, deckFactory = null, onChange = () => {} } = {}) {
+  constructor({ roomManager, now = Date.now, schedule = setTimeout, cancelSchedule = clearTimeout, turnDurationMs, random = Math.random, deckFactory = null, onChange = () => {} } = {}) {
     this.roomManager = roomManager; this.now = now; this.random = random; this.deckFactory = deckFactory; this.onChange = onChange;
     this.sessions = new Map();
     this.exchangeSessions = new Map();
-    this.timer = new TurnTimer({ now, schedule, cancelSchedule, onTimeout: (expected) => this.handleTimeout(expected) });
+    this.timer = new TurnTimer({ now, schedule, cancelSchedule, ...(turnDurationMs === undefined ? {} : { durationMs: turnDurationMs }), onTimeout: (expected) => this.handleTimeout(expected) });
   }
 
   maybeStart(roomCode) {

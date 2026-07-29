@@ -1,6 +1,7 @@
-const safeAck = (ack) => typeof ack === "function" ? ack : () => {};
+import { socketRequest } from "../socketSupport.js";
+import { silentLogger } from "../logger.js";
 
-export const registerGameSocketHandlers = (io, roomManager, coordinator) => {
+export const registerGameSocketHandlers = (io, roomManager, coordinator, { limiter = { take: () => true }, logger = silentLogger } = {}) => {
   const publish = (roomCode, type = "update") => {
     const room = roomManager.getRoom(roomCode);
     if (!room) return;
@@ -24,21 +25,21 @@ export const registerGameSocketHandlers = (io, roomManager, coordinator) => {
       if (type === "exchangeCancelled") socket.emit("exchange:cancelled", view);
     });
   };
-  coordinator.onChange = ({ roomCode, type }) => publish(roomCode, type);
+  coordinator.onChange = ({ roomCode, type }) => {
+    publish(roomCode, type);
+    const event = {
+      started: "round_started",
+      complete: "round_completed",
+      exchange: "exchange_started",
+      exchangeCancelled: "exchange_cancelled",
+    }[type];
+    if (event) logger.info(event, { roomCode });
+  };
 
   io.on("connection", (socket) => {
-    socket.on("game:play", (payload = {}, ack) => {
-      const result = coordinator.play(socket.id, payload.cardIds);
-      safeAck(ack)(result);
-    });
-    socket.on("game:pass", (_payload = {}, ack) => {
-      const result = coordinator.pass(socket.id);
-      safeAck(ack)(result);
-    });
-    socket.on("exchange:returnCards", (payload = {}, ack) => {
-      const result = coordinator.returnExchangeCards(socket.id, payload.cardIds);
-      safeAck(ack)(result);
-    });
+    socketRequest({ socket, event: "game:play", schema: { cardIds: { type: "stringArray", max: 4, itemMax: 100 } }, limiter, logger, handler: ({ cardIds }) => coordinator.play(socket.id, cardIds) });
+    socketRequest({ socket, event: "game:pass", schema: {}, limiter, logger, handler: () => coordinator.pass(socket.id) });
+    socketRequest({ socket, event: "exchange:returnCards", schema: { cardIds: { type: "stringArray", max: 2, itemMax: 100 } }, limiter, logger, handler: ({ cardIds }) => coordinator.returnExchangeCards(socket.id, cardIds) });
   });
   return { publish };
 };

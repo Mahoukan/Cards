@@ -8,6 +8,7 @@ export const createGameRenderer = ({ onPlay, onPass, onKick, onLeave }) => {
   const byId = (id) => document.getElementById(id);
   let view = null; let selectedIds = []; let connected = true; let busy = false;
   let timerId = null; let clockOffset = 0; let resizeFrame = null;
+  let announcedTurn = null; let warnedDeadline = null;
 
   const layoutHand = () => {
     const hand = byId("hand");
@@ -26,6 +27,10 @@ export const createGameRenderer = ({ onPlay, onPass, onKick, onLeave }) => {
     byId("timer-value").textContent = `0:${String(seconds).padStart(2, "0")}`;
     byId("timer-bar").style.width = `${seconds / 30 * 100}%`;
     byId("turn-panel").classList.toggle("is-urgent", seconds <= 5);
+    if (seconds <= 5 && view.turnDeadline !== warnedDeadline) {
+      warnedDeadline = view.turnDeadline;
+      byId("game-announcement").textContent = "Five seconds remain in this turn.";
+    }
   };
   const render = () => {
     if (!view?.you) return;
@@ -57,6 +62,12 @@ export const createGameRenderer = ({ onPlay, onPass, onKick, onLeave }) => {
       ? `${pilePlayer?.name ?? "Player"} played ${formatCount(view.currentPlay.count)} · ${view.currentPlay.rank}s`
       : view.openingPlayRequired ? "Opening play must include 3♣" : "The pile is empty";
     const current = view.players.find(({ id }) => id === view.currentPlayerId);
+    if (view.currentPlayerId !== announcedTurn) {
+      announcedTurn = view.currentPlayerId; warnedDeadline = null;
+      byId("game-announcement").textContent = view.currentPlayerId === view.you.id
+        ? "Your turn has started."
+        : `${current?.name ?? "Another player"}'s turn has started.`;
+    }
     byId("turn-message").textContent = !connected ? "Reconnecting…"
       : view.you.finished ? `You finished #${view.you.finishPosition}`
       : view.you.forfeited ? "You forfeited"

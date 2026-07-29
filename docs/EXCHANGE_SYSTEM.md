@@ -1,5 +1,7 @@
 # Exchange system
 
+Production hardening: returns accept at most two bounded card IDs and never accept card objects, roles, identities, or deadlines. Private exchanged cards are excluded from logs. Return stays disabled while offline or pending.
+
 ## Next-round readiness
 
 When a round completes, every remaining room player's `nextRoundReady` flag is false. A player may toggle their own readiness with `round:setReady` only while the room is `round_complete`.

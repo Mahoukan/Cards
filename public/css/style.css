@@ -16,8 +16,8 @@
   color: var(--ink);
 }
 
-* { box-sizing: border-box; }
-html, body { min-height: 100%; margin: 0; }
+* { box-sizing: border-box; min-width: 0; }
+html, body { min-height: 100%; max-width: 100%; margin: 0; }
 body {
   min-height: 100vh;
   min-height: 100dvh;
@@ -75,6 +75,8 @@ input { width: 100%; min-height: 50px; padding: 10px 13px; border: 2px solid #aa
 .connection-status::before { width: 9px; height: 9px; border-radius: 50%; background: #a44d37; content: ""; }
 .connection-status[data-state="connected"]::before { background: #23935b; }
 .connection-status[data-state="reconnecting"]::before { background: #e0a52a; }
+.connection-status[data-state="resuming"]::before { background: #e0a52a; }
+.connection-status[data-state="offline"]::before { background: #c85a45; }
 .connection-status.compact { margin: 0; color: #eaf5ee; font-size: .7rem; }
 
 .screen-header, .game-header, .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -90,6 +92,7 @@ input { width: 100%; min-height: 50px; padding: 10px 13px; border: 2px solid #aa
 .player-row.is-you { border: 2px solid #256744; }
 .player-row.is-you strong::after { content: " (you)"; font-size: .75rem; }
 .player-row strong, .player-row span { display: block; }
+.player-row > div { min-width: 0; overflow-wrap: anywhere; }
 .player-row span { margin-top: 3px; color: var(--muted); font-size: .76rem; }
 .remove-button { min-width: 76px; padding: 7px; background: #f6e5e1; color: #81291f; font-size: .72rem; }
 .callout { padding: 12px; border-radius: 10px; background: #edf4ef; color: #365044; font-size: .85rem; line-height: 1.4; }
@@ -135,6 +138,7 @@ input { width: 100%; min-height: 50px; padding: 10px 13px; border: 2px solid #aa
 .hand { --card-step: 46px; --hand-width: 100%; --card-width: 72px; height: calc(var(--card-height) + 14px); overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; touch-action: pan-x; scrollbar-width: thin; }
 .hand::after { display: block; width: var(--hand-width); height: 1px; content: ""; }
 .hand .playing-card { position: absolute; left: calc(var(--index, 0) * var(--card-step)); }
+.hand .playing-card { touch-action: pan-x; }
 .hand { position: relative; }
 .hand .playing-card:nth-child(1) { --index: 0; } .hand .playing-card:nth-child(2) { --index: 1; }
 .hand .playing-card:nth-child(3) { --index: 2; } .hand .playing-card:nth-child(4) { --index: 3; }
@@ -185,6 +189,12 @@ button.playing-card { cursor: pointer; }
   .pile-cards { min-height: 64px; }
   .pile-cards .playing-card { width: 47px; height: 64px; }
   .hand { height: calc(var(--card-height) + 14px); }
+}
+@media (max-width: 340px) {
+  .screen { padding-left: max(9px, env(safe-area-inset-left)); padding-right: max(9px, env(safe-area-inset-right)); }
+  .panel { padding: 16px; }
+  .game-screen { gap: 4px; }
+  .opponent { flex-basis: 82px; }
 }
 @media (min-width: 700px) {
   .screen:not(.game-screen) { padding-block: 40px; }

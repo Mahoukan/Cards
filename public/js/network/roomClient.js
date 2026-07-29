@@ -1,9 +1,12 @@
-export const createRoomClient = (socket) => {
+import { createActionRequester } from "./actionRequest.js";
+
+export const createRoomClient = (socket, options) => {
   let session = null;
   let room = null;
   const listeners = new Map();
   const notify = (event, value) => listeners.get(event)?.forEach((listener) => listener(value));
-  const request = (event, payload) => new Promise((resolve) => socket.emit(event, payload, resolve));
+  const requester = createActionRequester(socket, options);
+  let resumeSequence = 0;
 
   socket.on("room:update", (nextRoom) => { room = nextRoom; notify("update", nextRoom); });
   socket.on("room:readyToStart", (nextRoom) => { room = nextRoom; notify("ready", nextRoom); });
@@ -13,7 +16,7 @@ export const createRoomClient = (socket) => {
   socket.on("disconnect", () => notify("disconnect"));
 
   const authenticatedRequest = async (event, payload) => {
-    const response = await request(event, payload);
+    const response = await requester.request(event, payload);
     if (response?.ok && response.room !== undefined) room = response.room;
     return response;
   };
@@ -35,7 +38,9 @@ export const createRoomClient = (socket) => {
       return response;
     },
     async resume(savedSession) {
+      const sequence = ++resumeSequence;
       const response = await authenticatedRequest("room:resume", savedSession);
+      if (sequence !== resumeSequence) return { ok: false, error: { code: "STALE_RESUME", message: "A newer recovery attempt replaced this one." } };
       if (response.ok) session = response.session;
       return response;
     },
@@ -43,7 +48,7 @@ export const createRoomClient = (socket) => {
     setNextRoundReady(ready) { return authenticatedRequest("round:setReady", { ready }); },
     kick(playerId) { return authenticatedRequest("room:kick", { playerId }); },
     leave() { return authenticatedRequest("room:leave", {}); },
-    clear() { session = null; room = null; },
+    clear() { resumeSequence += 1; requester.clear(); session = null; room = null; },
     get session() { return session; },
     get room() { return room; },
     get connected() { return socket.connected; },

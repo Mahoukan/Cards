@@ -30,6 +30,7 @@ let lobbyRenderer;
 let gameRenderer;
 let resultsRenderer;
 let exchangeRenderer;
+let resumeAttempt = 0;
 
 const manager = createScreenManager({
   onChange: (screen) => {
@@ -131,19 +132,32 @@ if (demoMode) {
     if (activeSession && room.status === "lobby") lobbyRenderer.update(room, activeSession.playerId);
   });
   roomClient.on("disconnect", () => {
+    resumeAttempt += 1;
     updateConnection("Reconnecting…", "reconnecting");
     lobbyRenderer.setConnected(false); gameRenderer.setConnected(false); exchangeRenderer.setConnected(false); resultsRenderer.setConnected(false);
   });
   roomClient.on("connect", async () => {
-    updateConnection("Connected", "connected");
-    lobbyRenderer.setConnected(true); gameRenderer.setConnected(true); exchangeRenderer.setConnected(true); resultsRenderer.setConnected(true);
-    if (!activeSession) return;
+    if (!activeSession) {
+      updateConnection("Connected", "connected");
+      lobbyRenderer.setConnected(true); gameRenderer.setConnected(true); exchangeRenderer.setConnected(true); resultsRenderer.setConnected(true);
+      return;
+    }
+    const attempt = ++resumeAttempt;
+    updateConnection("Restoring session…", "resuming");
+    lobbyRenderer.setConnected(false); gameRenderer.setConnected(false); exchangeRenderer.setConnected(false); resultsRenderer.setConnected(false);
     const response = await roomClient.resume(activeSession);
+    if (attempt !== resumeAttempt) return;
     if (!response.ok) {
+      if (response.error?.code === "OFFLINE" || response.error?.code === "ACK_TIMEOUT") {
+        updateConnection("Reconnecting…", "reconnecting");
+        return;
+      }
       returnHome("Your saved room session has expired. Please create or join again.");
       return;
     }
     activeSession = response.session; saveRoomSession(activeSession);
+    updateConnection("Connected", "connected");
+    lobbyRenderer.setConnected(true); gameRenderer.setConnected(true); exchangeRenderer.setConnected(true); resultsRenderer.setConnected(true);
     if (response.game) gameClient.accept(response.game);
     if (response.exchange) exchangeClient.accept(response.exchange);
     if (response.room.status === "lobby") {
@@ -166,7 +180,7 @@ if (demoMode) {
     exchangeRenderer.update(view);
     manager.show("exchange");
   });
-  socket.on("connect_error", () => updateConnection("Disconnected", "disconnected"));
+  socket.on("connect_error", () => updateConnection(navigator.onLine ? "Reconnecting…" : "Offline", navigator.onLine ? "reconnecting" : "offline"));
 } else updateConnection("Disconnected", "disconnected");
 
 document.addEventListener("click", (event) => {
@@ -215,6 +229,14 @@ if (!demoMode) {
 
 const roomInput = byId("room-code");
 roomInput.addEventListener("input", () => { roomInput.value = normaliseRoomCode(roomInput.value); });
+const gameMenu = byId("game-menu");
+byId("menu-button").addEventListener("click", () => {
+  if (!gameMenu.open) gameMenu.showModal();
+});
+byId("close-menu").addEventListener("click", () => gameMenu.close());
+gameMenu.addEventListener("click", (event) => {
+  if (event.target === gameMenu) gameMenu.close();
+});
 window.addEventListener("popstate", () => manager.show(new URLSearchParams(location.search).get("screen"), { updateHistory: false }));
 const sharedCode = normaliseRoomCode(params.get("room"));
 if (sharedCode && !demoMode) {
