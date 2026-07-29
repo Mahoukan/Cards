@@ -1,104 +1,73 @@
 # President
 
-A mobile-first foundation for an online President card game designed for private groups.
+A mobile-first President card game for private groups.
 
 ## Status
 
-Stage 2 is complete: the project includes a documented, isolated President rules engine with deterministic deck utilities, legal-play validation, immutable single-round state transitions, role assignment, exchange planning, and automated tests.
+Stage 3 is complete: the browser now includes a polished, local interface prototype backed by deterministic mock data. The isolated server rules engine remains authoritative and fully tested, but it is **not connected to the interface yet**. Multiplayer rooms, accounts, persistence, matchmaking, and real room Socket.IO events are not implemented.
 
-Rooms and multiplayer integration are not implemented yet. The rules engine is intentionally not connected to Express, Socket.IO, or the browser interface.
+The Socket.IO connection indicator reports server availability only. Create, join, ready, remove, play, and pass actions change local mock state and do not contact the server.
+
+## Prototype screens
+
+- Home
+- Create room
+- Join room
+- Lobby
+- Active game
+- Round results
+
+Open a screen directly for review:
+
+```text
+/?screen=home
+/?screen=create
+/?screen=join
+/?screen=lobby
+/?screen=game
+/?screen=results
+```
+
+Unknown screen values safely show Home. Normal interface buttons also navigate between screens.
+
+## Design target
+
+The interface is designed mobile-first for portrait phone widths from 320px through 430px, with safe-area padding, touch controls, accessible status messaging, keyboard focus states, and a constrained desktop layout. Cards use an asset-independent CSS/text renderer because no card images are currently present.
 
 ## Technology
 
-- HTML
-- CSS
+- Semantic HTML and mobile-first CSS
 - Vanilla browser JavaScript using ES modules
-- Node.js 24
-- Express
-- Socket.IO
-- nodemon for local development
-- GitHub and Railway for future source hosting and deployment
+- Node.js 24 and its built-in test runner
+- Express and Socket.IO
 
-## Requirements
+No frontend framework or build step is used.
 
-- Node.js 24
-- npm
-
-If you use nvm, run `nvm use` from the project directory.
-
-## Installation
+## Setup and development
 
 ```bash
 npm install
-```
-
-## Local development
-
-Start the server with automatic restarts:
-
-```bash
 npm run dev
 ```
 
-Then visit `http://localhost:3000`. The health check is available at `http://localhost:3000/health`.
+Visit `http://localhost:3000`. The health endpoint is `http://localhost:3000/health`.
 
-## Tests
-
-Run the complete rules-engine test suite with Node's built-in test runner:
-
-```bash
-npm test
-```
-
-No external testing framework is required.
-
-## Production
-
-Start the production server:
+For production-style local startup:
 
 ```bash
 npm start
 ```
 
-The server uses the `PORT` environment variable when provided and otherwise listens on port 3000.
+The server uses `PORT` when provided, otherwise port 3000.
 
-## Folder structure
+## Testing
 
-```text
-card-game-place/
-├── public/
-│   ├── assets/
-│   │   └── cards/
-│   │       └── .gitkeep
-│   ├── css/
-│   │   └── style.css
-│   ├── js/
-│   │   └── app.js
-│   └── index.html
-├── src/
-│   ├── game/
-│   │   ├── constants.js
-│   │   ├── deck.js
-│   │   ├── gameEngine.js
-│   │   ├── index.js
-│   │   ├── roles.js
-│   │   └── rules.js
-│   └── rooms/
-│       └── .gitkeep
-├── docs/
-│   └── PRESIDENT_RULES.md
-├── tests/
-│   └── game/
-│       ├── deck.test.js
-│       ├── gameEngine.test.js
-│       ├── roles.test.js
-│       └── rules.test.js
-├── .gitignore
-├── .nvmrc
-├── package.json
-├── package-lock.json
-├── README.md
-└── server.js
+Run the complete rules-engine and browser-utility suite:
+
+```bash
+npm test
 ```
 
-The agreed rules are documented in `docs/PRESIDENT_RULES.md`. Room creation, joining, and multiplayer integration will be added in later stages.
+Browser utility tests cover display-name and room-code handling, selection compatibility, hand layout, counts, and timer formatting. No DOM testing dependency is required.
+
+The President rules are documented in [`docs/PRESIDENT_RULES.md`](docs/PRESIDENT_RULES.md).

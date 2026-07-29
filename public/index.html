@@ -3,32 +3,125 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="description" content="President, an online card game for private groups.">
+    <meta name="description" content="President private card-table interface prototype.">
     <title>President</title>
     <link rel="stylesheet" href="/css/style.css">
   </head>
   <body>
-    <main>
-      <section class="game-panel" aria-labelledby="page-title">
-        <h1 id="page-title">President</h1>
-        <p class="subtitle">An online card game for private groups of friends and family.</p>
-
-        <div class="actions" aria-label="Room actions">
-          <button type="button" disabled>Create Room</button>
-          <button type="button" disabled>Join Room</button>
+    <main id="app">
+      <section class="screen welcome-screen" data-screen="home" aria-labelledby="home-title">
+        <div class="panel hero-panel">
+          <p class="eyebrow">Private card table</p>
+          <h1 id="home-title">President</h1>
+          <p class="lead">A quick, competitive card game for friends and family.</p>
+          <div class="stack">
+            <button class="button button-primary" type="button" data-go="create">Create Room</button>
+            <button class="button button-secondary" type="button" data-go="join">Join Room</button>
+          </div>
+          <p class="connection-status" data-connection data-state="disconnected" role="status" aria-live="polite">Disconnected</p>
+          <p class="fine-print">Rooms are private and shared by link or short code. These room controls are a local prototype.</p>
         </div>
+      </section>
 
-        <p
-          id="connection-status"
-          class="status"
-          data-state="disconnected"
-          role="status"
-          aria-live="polite"
-        >Disconnected</p>
-        <p class="next-step">Room functionality will be added in the next stage.</p>
+      <section class="screen form-screen" data-screen="create" aria-labelledby="create-title" hidden>
+        <div class="panel">
+          <button class="back-button" type="button" data-go="home" aria-label="Back to home">← Back</button>
+          <p class="eyebrow">Prototype mode</p>
+          <h2 id="create-title">Create a room</h2>
+          <p class="muted">Choose the name the other players will see.</p>
+          <form id="create-form" novalidate>
+            <label for="create-name">Display name</label>
+            <input id="create-name" name="displayName" maxlength="20" autocomplete="nickname" required>
+            <p id="create-error" class="form-message" aria-live="polite"></p>
+            <button class="button button-primary" type="submit">Create Room</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="screen form-screen" data-screen="join" aria-labelledby="join-title" hidden>
+        <div class="panel">
+          <button class="back-button" type="button" data-go="home" aria-label="Back to home">← Back</button>
+          <p class="eyebrow">Prototype mode</p>
+          <h2 id="join-title">Join a room</h2>
+          <form id="join-form" novalidate>
+            <label for="join-name">Display name</label>
+            <input id="join-name" name="displayName" maxlength="20" autocomplete="nickname" required>
+            <label for="room-code">Room code</label>
+            <input id="room-code" class="code-input" name="roomCode" maxlength="4" inputmode="text" autocomplete="off" autocapitalize="characters" required>
+            <p id="join-error" class="form-message" aria-live="polite"></p>
+            <button class="button button-primary" type="submit">Join Room</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="screen lobby-screen" data-screen="lobby" aria-labelledby="lobby-title" hidden>
+        <header class="screen-header">
+          <div><p class="eyebrow">Room</p><h2 id="lobby-title" data-room-code>ABCD</h2></div>
+          <button class="button button-compact button-secondary" id="copy-link" type="button">Copy link</button>
+        </header>
+        <p id="copy-message" class="toast-space" aria-live="polite"></p>
+        <div class="panel lobby-panel">
+          <div class="section-heading"><h3>Players</h3><span id="player-count">4 / 6</span></div>
+          <ul id="player-list" class="player-list"></ul>
+          <p id="lobby-status" class="callout" aria-live="polite">At least two connected players must be ready. The game starts automatically.</p>
+          <button class="button button-primary" id="ready-button" type="button" aria-pressed="false">I’m Ready</button>
+          <button class="button button-quiet" type="button" data-go="home">Leave Room</button>
+        </div>
+      </section>
+
+      <section class="screen game-screen" data-screen="game" aria-labelledby="game-heading" hidden>
+        <header class="game-header">
+          <div><span class="room-chip">Room <strong data-room-code>ABCD</strong></span><span class="round-label">Round 1</span></div>
+          <div class="header-actions">
+            <span class="connection-status compact" data-connection data-state="disconnected">Disconnected</span>
+            <button class="icon-button" id="menu-button" type="button" aria-haspopup="dialog" aria-controls="game-menu">Menu</button>
+          </div>
+        </header>
+        <h2 id="game-heading" class="visually-hidden">Active game</h2>
+        <div id="opponents" class="opponents" aria-label="Opponents"></div>
+        <section class="pile-area" aria-labelledby="pile-heading">
+          <p class="eyebrow" id="pile-heading">Current pile</p>
+          <div id="pile-cards" class="pile-cards"></div>
+          <p id="pile-summary" class="pile-summary"></p>
+        </section>
+        <section id="turn-panel" class="turn-panel" aria-live="polite">
+          <div><strong id="turn-message">Your turn</strong><span class="prototype-label">Local demo timer</span></div>
+          <div class="timer"><span id="timer-value">0:30</span><div class="timer-track" aria-hidden="true"><span id="timer-bar"></span></div></div>
+        </section>
+        <p id="game-notice" class="game-notice" aria-live="polite"></p>
+        <section class="hand-area" aria-labelledby="hand-heading">
+          <div class="section-heading"><h3 id="hand-heading">Your hand</h3><span id="hand-count"></span></div>
+          <div id="hand" class="hand" role="group" aria-label="Your cards"></div>
+        </section>
+        <div class="game-controls">
+          <button class="button button-secondary" id="pass-button" type="button">Pass</button>
+          <button class="button button-primary" id="play-button" type="button" disabled>Play</button>
+        </div>
+        <dialog id="game-menu" class="menu-dialog" aria-labelledby="menu-title">
+          <h3 id="menu-title">Game menu</h3>
+          <button class="button button-secondary" type="button" data-go="lobby">Return to Lobby</button>
+          <button class="button button-quiet" type="button" data-go="home">Leave Game</button>
+          <button class="button button-primary" id="close-menu" type="button">Close Menu</button>
+        </dialog>
+      </section>
+
+      <section class="screen results-screen" data-screen="results" aria-labelledby="results-title" hidden>
+        <header class="result-hero"><p class="eyebrow">Round 1</p><h2 id="results-title">Round complete</h2><p>Jamie takes the table.</p></header>
+        <div class="panel">
+          <ol id="results-list" class="results-list"></ol>
+          <section class="exchange-summary" aria-labelledby="exchange-title">
+            <h3 id="exchange-title">Next-round exchange</h3>
+            <p>Scum gives their two highest cards to President; President returns two cards.</p>
+            <p>Vice Scum gives their highest card to Vice President; Vice President returns one card.</p>
+          </section>
+          <div class="stack">
+            <button class="button button-primary" type="button" data-go="lobby">Ready for Rematch</button>
+            <button class="button button-secondary" type="button" data-go="lobby">Return to Lobby</button>
+            <button class="button button-quiet" type="button" data-go="home">Leave Room</button>
+          </div>
+        </div>
       </section>
     </main>
-
     <script src="/socket.io/socket.io.js"></script>
     <script type="module" src="/js/app.js"></script>
   </body>
