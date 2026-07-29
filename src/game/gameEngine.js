@@ -98,6 +98,8 @@ export function createRound({
   deck,
   roundNumber = 1,
   random = Math.random,
+  startingPlayerId = null,
+  openingPlayRequired = true,
 }) {
   validatePlayers(players);
   if (!Number.isInteger(roundNumber) || roundNumber < 1) {
@@ -115,16 +117,19 @@ export function createRound({
     hand: sortHand(hands[index]),
     finishPosition: null,
   }));
-  const startingPlayerId = findThreeOfClubsHolder(roundPlayers);
-  if (!startingPlayerId) {
+  const firstPlayerId = startingPlayerId ?? findThreeOfClubsHolder(roundPlayers);
+  if (!firstPlayerId) {
     throw new Error("The round deck must contain the 3 of Clubs.");
+  }
+  if (!roundPlayers.some((player) => player.id === firstPlayerId)) {
+    throw new Error("The starting player must be in the round.");
   }
 
   return {
     phase: "playing",
     roundNumber,
     players: roundPlayers,
-    currentPlayerId: startingPlayerId,
+    currentPlayerId: firstPlayerId,
     currentPlay: null,
     discardPile: [],
     passedPlayerIds: [],
@@ -133,7 +138,7 @@ export function createRound({
     forfeitedPlayerIds: [],
     forfeitOrder: [],
     removedCards: [],
-    openingPlayRequired: true,
+    openingPlayRequired,
   };
 }
 

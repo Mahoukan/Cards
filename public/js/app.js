@@ -1,8 +1,10 @@
 import { createDemoController, normaliseRoomCode, validateDisplayName } from "./demo/demoController.js";
 import { createDemoState } from "./demo/demoState.js";
+import { createExchangeClient } from "./network/exchangeClient.js";
 import { createGameClient } from "./network/gameClient.js";
 import { createRoomClient } from "./network/roomClient.js";
 import { clearRoomSession, readRoomSession, saveRoomSession } from "./network/sessionStorage.js";
+import { createExchangeRenderer } from "./ui/exchangeRenderer.js";
 import { createGameRenderer } from "./ui/gameRenderer.js";
 import { createLobbyRenderer } from "./ui/lobbyRenderer.js";
 import { createResultsRenderer } from "./ui/resultsRenderer.js";
@@ -21,11 +23,13 @@ const updateConnection = (label, state) => connectionNodes.forEach((node) => {
 const socket = typeof window.io === "function" ? window.io() : null;
 const roomClient = socket ? createRoomClient(socket) : null;
 const gameClient = socket ? createGameClient(socket) : null;
+const exchangeClient = socket ? createExchangeClient(socket) : null;
 let activeSession = demoMode ? null : readRoomSession();
 let demoController;
 let lobbyRenderer;
 let gameRenderer;
 let resultsRenderer;
+let exchangeRenderer;
 
 const manager = createScreenManager({
   onChange: (screen) => {
@@ -33,6 +37,8 @@ const manager = createScreenManager({
     else {
       if (screen === "game") gameRenderer?.startTimer();
       else gameRenderer?.stopTimer();
+      if (screen === "game") exchangeRenderer?.clearSelection();
+      if (screen === "exchange") gameRenderer?.clearSelection();
       if (screen === "lobby" && (!activeSession || !roomClient?.room)) {
         setHomeMessage("Create, join, or resume a room before opening the lobby.");
         queueMicrotask(() => manager.show("home"));
@@ -44,7 +50,7 @@ const manager = createScreenManager({
 const returnHome = (message, { clearStored = true } = {}) => {
   if (clearStored) clearRoomSession();
   activeSession = null;
-  roomClient?.clear(); gameClient?.clear(); lobbyRenderer?.clear(); gameRenderer?.stopTimer();
+  roomClient?.clear(); gameClient?.clear(); exchangeClient?.clear(); lobbyRenderer?.clear(); gameRenderer?.stopTimer();
   setHomeMessage(message); manager.show("home");
 };
 const handleResponseError = (response, target = "home-message") => {
@@ -57,13 +63,13 @@ if (demoMode) {
   byId("leave-button").addEventListener("click", () => manager.show("home"));
   byId("game-leave-button").addEventListener("click", () => manager.show("home"));
   byId("results-leave-button").addEventListener("click", () => manager.show("home"));
-} else if (roomClient && gameClient) {
+} else if (roomClient && gameClient && exchangeClient) {
   const leaveRealRoom = async (requiresConfirmation = false) => {
     if (requiresConfirmation && !window.confirm("Leaving will forfeit this round. Continue?")) return;
-    gameRenderer.setBusy(true);
+    gameRenderer.setBusy(true); exchangeRenderer?.setBusy(true); resultsRenderer?.setBusy(true);
     const response = await roomClient.leave();
     if (response.ok) returnHome(requiresConfirmation ? "You left the room and forfeited the round." : "You left the room.");
-    gameRenderer.setBusy(false);
+    gameRenderer.setBusy(false); exchangeRenderer?.setBusy(false); resultsRenderer?.setBusy(false);
     byId("game-notice").textContent = response.error?.message ?? "Unable to leave the room.";
   };
 
@@ -76,7 +82,21 @@ if (demoMode) {
     },
     onLeave: leaveRealRoom,
   });
-  resultsRenderer = createResultsRenderer();
+  exchangeRenderer = createExchangeRenderer({
+    onReturnCards: (cardIds) => exchangeClient.returnCards(cardIds),
+    onKick: async (playerId) => {
+      const response = await roomClient.kick(playerId);
+      if (!response.ok) byId("exchange-notice").textContent = response.error?.message ?? "Unable to remove that player.";
+    },
+    onLeave: leaveRealRoom,
+  });
+  resultsRenderer = createResultsRenderer({
+    onReady: (ready) => roomClient.setNextRoundReady(ready),
+    onKick: async (playerId) => {
+      const response = await roomClient.kick(playerId);
+      if (!response.ok) byId("results-notice").textContent = response.error?.message ?? "Unable to remove that player.";
+    },
+  });
   byId("results-leave-button").addEventListener("click", () => leaveRealRoom(false));
 
   lobbyRenderer = createLobbyRenderer({
@@ -105,17 +125,18 @@ if (demoMode) {
   roomClient.on("update", (room) => {
     if (!activeSession || room.code !== activeSession.roomCode) return;
     if (room.status === "lobby") lobbyRenderer.update(room, activeSession.playerId);
+    if (room.status === "round_complete") resultsRenderer.updateRoom(room);
   });
   roomClient.on("ready", (room) => {
     if (activeSession && room.status === "lobby") lobbyRenderer.update(room, activeSession.playerId);
   });
   roomClient.on("disconnect", () => {
     updateConnection("Reconnecting…", "reconnecting");
-    lobbyRenderer.setConnected(false); gameRenderer.setConnected(false);
+    lobbyRenderer.setConnected(false); gameRenderer.setConnected(false); exchangeRenderer.setConnected(false); resultsRenderer.setConnected(false);
   });
   roomClient.on("connect", async () => {
     updateConnection("Connected", "connected");
-    lobbyRenderer.setConnected(true); gameRenderer.setConnected(true);
+    lobbyRenderer.setConnected(true); gameRenderer.setConnected(true); exchangeRenderer.setConnected(true); resultsRenderer.setConnected(true);
     if (!activeSession) return;
     const response = await roomClient.resume(activeSession);
     if (!response.ok) {
@@ -124,9 +145,11 @@ if (demoMode) {
     }
     activeSession = response.session; saveRoomSession(activeSession);
     if (response.game) gameClient.accept(response.game);
+    if (response.exchange) exchangeClient.accept(response.exchange);
     if (response.room.status === "lobby") {
       lobbyRenderer.update(response.room, activeSession.playerId); manager.show("lobby");
     } else if (response.room.status === "playing") manager.show("game");
+    else if (response.room.status === "exchange") manager.show("exchange");
     else if (response.room.status === "round_complete") manager.show("results");
   });
   roomClient.on("kicked", () => returnHome("The host removed you from the room."));
@@ -135,8 +158,13 @@ if (demoMode) {
     if (!activeSession || view.roomCode !== activeSession.roomCode) return;
     gameRenderer.update(view);
     if (view.roomStatus === "round_complete") {
-      resultsRenderer.update(view); manager.show("results");
+      resultsRenderer.update(view, roomClient.room); manager.show("results");
     } else manager.show("game");
+  });
+  exchangeClient.onUpdate((view) => {
+    if (!activeSession || view.roomCode !== activeSession.roomCode) return;
+    exchangeRenderer.update(view);
+    manager.show("exchange");
   });
   socket.on("connect_error", () => updateConnection("Disconnected", "disconnected"));
 } else updateConnection("Disconnected", "disconnected");
@@ -144,7 +172,7 @@ if (demoMode) {
 document.addEventListener("click", (event) => {
   const link = event.target.closest("[data-go]");
   if (!link) return;
-  if (!demoMode && ["game", "results", "lobby"].includes(link.dataset.go)) return;
+  if (!demoMode && ["game", "exchange", "results", "lobby"].includes(link.dataset.go)) return;
   manager.show(link.dataset.go);
 });
 
@@ -193,6 +221,6 @@ if (sharedCode && !demoMode) {
   roomInput.value = sharedCode; manager.show("join", { updateHistory: false });
 } else {
   let initial = normaliseScreen(params.get("screen"));
-  if (!demoMode && ["game", "results", "lobby"].includes(initial)) initial = "home";
+  if (!demoMode && ["game", "exchange", "results", "lobby"].includes(initial)) initial = "home";
   manager.show(initial, { updateHistory: false });
 }

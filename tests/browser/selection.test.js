@@ -22,3 +22,8 @@ test("toggle adds and removes cards without changing selection on rejection", ()
   assert.deepEqual(toggleCardSelection(["7-hearts"], cards[0], cards).ids, []);
   assert.deepEqual(toggleCardSelection(["7-hearts"], cards[2], cards).ids, ["7-hearts"]);
 });
+
+test("exchange selection accepts mixed ranks up to the required count", () => {
+  assert.deepEqual(toggleCardSelection(["7-hearts"], cards[2], cards, { mode: "exchange", max: 2 }).ids, ["7-hearts", "8-spades"]);
+  assert.deepEqual(toggleCardSelection(["7-hearts", "8-spades"], cards[1], cards, { mode: "exchange", max: 2 }).ids, ["7-hearts", "8-spades"]);
+});

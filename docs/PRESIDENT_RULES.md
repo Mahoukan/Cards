@@ -40,9 +40,11 @@ Ranks increase in this order:
 3, 4, 5, 6, 7, 8, 9, 10, J, Q, K, A, 2
 ```
 
-## Opening the first round
+## Opening rounds
 
-The player holding the 3 of Clubs takes the first turn. Their first successful play must include that card. It may be played alone or as part of a pair, triple, or four of a kind. This restriction ends after the first successful play.
+In Round 1, the player holding the 3 of Clubs takes the first turn. Their first successful play must include that card. It may be played alone or as part of a pair, triple, or four of a kind. This restriction ends after the first successful play.
+
+In Round 2 and later, Scum from the recalculated current-room roles starts. The opening pile is empty, `openingPlayRequired` is false, and the first play does not need to contain the 3 of Clubs.
 
 ## Legal plays
 
@@ -94,7 +96,7 @@ Roles are assigned from finish order:
 
 ## Next-round exchanges
 
-The Stage 2 engine describes required exchanges but does not execute an exchange state machine.
+The game coordinator executes required exchanges before Round 2 and later.
 
 - Scum gives their two highest cards to President.
 - President later returns any two cards.
@@ -102,6 +104,8 @@ The Stage 2 engine describes required exchanges but does not execute an exchange
 - Vice President later returns any one card.
 - With two or three players, only President and Scum exchange.
 - Scum begins the next round after exchanges.
+- President and Vice President may return any cards they currently hold, including cards they just received.
+- Returned cards must be unique, owned by the returning player, and match the exact required quantity.
 
 Highest-card selection uses gameplay rank first. Tied ranks use `clubs, diamonds, hearts, spades` as an ascending deterministic suit order. This ordering exists only for deterministic selection and never affects play legality.
 

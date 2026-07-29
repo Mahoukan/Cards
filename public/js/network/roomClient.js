@@ -40,6 +40,7 @@ export const createRoomClient = (socket) => {
       return response;
     },
     setReady(ready) { return authenticatedRequest("room:setReady", { ready }); },
+    setNextRoundReady(ready) { return authenticatedRequest("round:setReady", { ready }); },
     kick(playerId) { return authenticatedRequest("room:kick", { playerId }); },
     leave() { return authenticatedRequest("room:leave", {}); },
     clear() { session = null; room = null; },

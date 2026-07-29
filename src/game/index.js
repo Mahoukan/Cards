@@ -29,6 +29,8 @@ export {
 } from "./rules.js";
 export { createRound, forfeitPlayer, passTurn, playCards, timeoutTurn } from "./gameEngine.js";
 export { assignRoles, getExchangeRequirements } from "./roles.js";
+export { assertUniqueRoundCards, createExchangeSession, returnExchangeCards } from "./exchangeCoordinator.js";
+export { createExchangeView } from "./exchangeViews.js";
 export { GameCoordinator } from "./gameCoordinator.js";
 export { createGameView } from "./gameViews.js";
 export { registerGameSocketHandlers } from "./gameSocketHandlers.js";

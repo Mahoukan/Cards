@@ -106,17 +106,46 @@
         </dialog>
       </section>
 
+      <section class="screen exchange-screen" data-screen="exchange" aria-labelledby="exchange-title" hidden>
+        <header class="game-header">
+          <div><span class="room-chip">Room <strong data-room-code>ABCD</strong></span><span id="exchange-round" class="round-label">Round 2 Exchange</span></div>
+          <span class="connection-status compact" data-connection data-state="disconnected">Disconnected</span>
+        </header>
+        <div class="panel">
+          <p class="eyebrow">Your role</p>
+          <h2 id="exchange-title"><span id="exchange-role">President</span></h2>
+          <p id="exchange-instructions" class="callout" aria-live="polite"></p>
+          <div id="exchange-players" class="opponents" aria-label="Exchange players"></div>
+          <div class="section-heading"><h3>Cards received</h3></div>
+          <div id="exchange-received" class="pile-cards"></div>
+          <div class="section-heading"><h3>Cards given</h3></div>
+          <div id="exchange-given" class="pile-cards"></div>
+          <p id="exchange-notice" class="game-notice" aria-live="polite"></p>
+          <section class="hand-area" aria-labelledby="exchange-hand-heading">
+            <div class="section-heading"><h3 id="exchange-hand-heading">Prepared hand</h3><span id="exchange-hand-count"></span></div>
+            <div id="exchange-hand" class="hand" role="group" aria-label="Your prepared cards"></div>
+          </section>
+          <div class="game-controls">
+            <button class="button button-primary" id="exchange-return-button" type="button" disabled>Return</button>
+            <button class="button button-quiet" id="exchange-leave-button" type="button">Leave Room</button>
+          </div>
+        </div>
+      </section>
+
       <section class="screen results-screen" data-screen="results" aria-labelledby="results-title" hidden>
-        <header class="result-hero"><p class="eyebrow">Round 1</p><h2 id="results-title">Round complete</h2><p>Jamie takes the table.</p></header>
+        <header class="result-hero"><p id="results-round-label" class="eyebrow">Round 1</p><h2 id="results-title">Round complete</h2><p>Jamie takes the table.</p></header>
         <div class="panel">
           <ol id="results-list" class="results-list"></ol>
-          <section class="exchange-summary demo-only" aria-labelledby="exchange-title">
-            <h3 id="exchange-title">Next-round exchange</h3>
+          <div class="section-heading real-only"><h3>Next round</h3></div>
+          <ul id="next-ready-list" class="player-list real-only"></ul>
+          <p id="results-notice" class="game-notice real-only" aria-live="polite"></p>
+          <section class="exchange-summary demo-only" aria-labelledby="demo-exchange-title">
+            <h3 id="demo-exchange-title">Next-round exchange</h3>
             <p>Scum gives their two highest cards to President; President returns two cards.</p>
             <p>Vice Scum gives their highest card to Vice President; Vice President returns one card.</p>
           </section>
-          <p class="callout real-only">Rematches and card exchanges will be added in the next stage.</p>
           <div class="stack">
+            <button class="button button-primary real-only" id="next-ready-button" type="button" aria-pressed="false">Ready for Round 2</button>
             <button class="button button-primary demo-only" type="button" data-go="lobby">Ready for Rematch</button>
             <button class="button button-secondary demo-only" type="button" data-go="lobby">Return to Lobby</button>
             <button class="button button-quiet" id="results-leave-button" type="button">Leave Room</button>

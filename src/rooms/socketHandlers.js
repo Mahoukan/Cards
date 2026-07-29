@@ -12,7 +12,7 @@ export const registerRoomSocketHandlers = (io, roomManager, coordinator = null, 
   };
 
   roomManager.onBeforeRemove = ({ room, player }) => {
-    coordinator?.forfeit(room.code, player.id);
+    coordinator?.beforePlayerRemoval(room, player);
   };
   roomManager.onExpire = ({ room, code }) => {
     if (room) {
@@ -52,7 +52,11 @@ export const registerRoomSocketHandlers = (io, roomManager, coordinator = null, 
         broadcast(result.room);
       }
       safeAck(ack)(result.ok && coordinator
-        ? { ...result, game: coordinator.getView(result.room.code, result.session.playerId) }
+        ? {
+            ...result,
+            game: coordinator.getView(result.room.code, result.session.playerId),
+            exchange: coordinator.getExchangeView(result.room.code, result.session.playerId),
+          }
         : result);
     });
 
@@ -70,6 +74,15 @@ export const registerRoomSocketHandlers = (io, roomManager, coordinator = null, 
         }
       }
       safeAck(ack)(response);
+    });
+
+    socket.on("round:setReady", (payload = {}, ack) => {
+      const result = coordinator?.setNextRoundReady(socket.id, payload.ready) ?? { ok: false, error: { message: "Round controls are unavailable." } };
+      if (result.ok) {
+        const control = roomManager.getControl(socket.id);
+        if (control) broadcast(roomManager.getPublicRoom(control.code));
+      }
+      safeAck(ack)(result);
     });
 
     socket.on("room:kick", (payload = {}, ack) => {

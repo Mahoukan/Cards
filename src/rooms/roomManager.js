@@ -93,6 +93,20 @@ export class RoomManager {
     return { ok: true, room: createPublicRoomView(controlled.room) };
   }
 
+  setNextRoundReady({ socketId, ready }) {
+    const controlled = this.#controlled(socketId);
+    if (!controlled) return failure(ERROR_CODES.NOT_IN_ROOM);
+    if (controlled.room.status !== ROOM_STATUS.ROUND_COMPLETE) return failure(ERROR_CODES.ROOM_NOT_JOINABLE);
+    controlled.player.nextRoundReady = Boolean(ready); this.#touch(controlled.room);
+    return { ok: true, room: createPublicRoomView(controlled.room) };
+  }
+
+  resetNextRoundReady(room) {
+    if (!room) return;
+    room.players.forEach((player) => { player.nextRoundReady = false; });
+    this.#touch(room);
+  }
+
   kickPlayer({ socketId, playerId }) {
     const controlled = this.#controlled(socketId);
     if (!controlled) return failure(ERROR_CODES.NOT_IN_ROOM);
@@ -117,7 +131,7 @@ export class RoomManager {
     if (!controlled) return null;
     const { room, player } = controlled;
     this.socketControls.delete(socketId);
-    player.connected = false; player.ready = false; player.disconnectedAt = this.now();
+    player.connected = false; player.ready = false; player.nextRoundReady = false; player.disconnectedAt = this.now();
     this.#touch(room);
     const timerKey = this.#timerKey(room.code, player.id);
     this.removalTimers.set(timerKey, this.schedule(() => {
@@ -156,7 +170,7 @@ export class RoomManager {
   }
 
   #createPlayer(name, socketId) {
-    return { id: this.createId(), name, reconnectToken: this.createToken(), socketId, connected: true, ready: false, joinedAt: this.now(), disconnectedAt: null };
+    return { id: this.createId(), name, reconnectToken: this.createToken(), socketId, connected: true, ready: false, nextRoundReady: false, joinedAt: this.now(), disconnectedAt: null };
   }
   #success(room, player) {
     return { ok: true, session: { roomCode: room.code, playerId: player.id, reconnectToken: player.reconnectToken }, room: createPublicRoomView(room) };

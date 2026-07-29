@@ -7,6 +7,7 @@ export const ROOM_STATUS = Object.freeze({
   LOBBY: "lobby",
   PLAYING: "playing",
   ROUND_COMPLETE: "round_complete",
+  EXCHANGE: "exchange",
 });
 export const ROOM_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 export const MAX_CODE_ATTEMPTS = 100;

@@ -44,6 +44,10 @@ An unfinished player forfeits when kicked, leaving voluntarily, or expiring. The
 
 ## Completion
 
-When one active unfinished player remains, the engine completes standings using normal finishers, the last active player, and forfeited players in reverse forfeit order. Existing role assignment produces President through Scum. The coordinator clears the timer, stores names and results, changes the room to `round_complete`, and sends final personalised views.
+When one active unfinished player remains, the engine completes standings using normal finishers, the last active player, and forfeited players in reverse forfeit order. Existing role assignment produces President through Scum. The coordinator clears the timer, stores names and results, changes the room to `round_complete`, resets next-round readiness for remaining room players, and sends final personalised views.
 
-There are no rematches, exchanges, or consecutive rounds yet. All active state is in memory and disappears after server restart or redeployment.
+## Multiple rounds
+
+Round numbers increment when a prepared exchange becomes the next active game session. Round 1 keeps the 3 of Clubs opening requirement. Round 2 and later use the recalculated Scum as `currentPlayerId`, set `openingPlayRequired` to false, and start a normal 30-second turn timer only after every required exchange is complete.
+
+All active state is in memory and disappears after server restart or redeployment.

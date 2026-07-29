@@ -1,4 +1,4 @@
-const VALID_SCREENS = new Set(["home", "create", "join", "lobby", "game", "results"]);
+const VALID_SCREENS = new Set(["home", "create", "join", "lobby", "game", "exchange", "results"]);
 
 export const normaliseScreen = (value) => VALID_SCREENS.has(value) ? value : "home";
 
