@@ -19,6 +19,7 @@
             <button class="button button-secondary" type="button" data-go="join">Join Room</button>
           </div>
           <p class="connection-status" data-connection data-state="disconnected" role="status" aria-live="polite">Disconnected</p>
+          <p id="home-message" class="home-message" aria-live="polite"></p>
           <p class="fine-print">Rooms are private and shared by link or short code. These room controls are a local prototype.</p>
         </div>
       </section>
@@ -65,7 +66,7 @@
           <ul id="player-list" class="player-list"></ul>
           <p id="lobby-status" class="callout" aria-live="polite">At least two connected players must be ready. The game starts automatically.</p>
           <button class="button button-primary" id="ready-button" type="button" aria-pressed="false">I’m Ready</button>
-          <button class="button button-quiet" type="button" data-go="home">Leave Room</button>
+          <button class="button button-quiet" id="leave-button" type="button">Leave Room</button>
         </div>
       </section>
 

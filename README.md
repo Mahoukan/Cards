@@ -4,46 +4,51 @@ A mobile-first President card game for private groups.
 
 ## Status
 
-Stage 3 is complete: the browser now includes a polished, local interface prototype backed by deterministic mock data. The isolated server rules engine remains authoritative and fully tested, but it is **not connected to the interface yet**. Multiplayer rooms, accounts, persistence, matchmaking, and real room Socket.IO events are not implemented.
+Stage 4 adds real, server-authoritative private rooms and live Socket.IO lobbies. Players can create or join a room, share its code, toggle readiness, reconnect from the original browser, leave, and be removed by the host. Host migration and disconnected-player cleanup are handled by the server.
 
-The Socket.IO connection indicator reports server availability only. Create, join, ready, remove, play, and pass actions change local mock state and do not contact the server.
+Real card gameplay is **not connected yet**. The President rules engine remains isolated and authoritative; dealing, playing, passing, timers, results, and exchanges will be integrated in Stage 5.
 
-## Prototype screens
+## Private rooms
 
-- Home
-- Create room
-- Join room
-- Lobby
-- Active game
-- Round results
-
-Open a screen directly for review:
+Room codes contain four unambiguous uppercase letters or numbers. Create Room generates a new code; Join Room accepts a code from another player. Invite links use:
 
 ```text
-/?screen=home
-/?screen=create
-/?screen=join
-/?screen=lobby
-/?screen=game
-/?screen=results
+/?room=ABCD
 ```
 
-Unknown screen values safely show Home. Normal interface buttons also navigate between screens.
+The link opens the Join screen and prefills the code. It does not contain private credentials or submit automatically.
 
-## Design target
+Rooms are stored only in server memory. A server restart, Railway restart, or redeployment removes every active room.
 
-The interface is designed mobile-first for portrait phone widths from 320px through 430px, with safe-area padding, touch controls, accessible status messaging, keyboard focus states, and a constrained desktop layout. Cards use an asset-independent CSS/text renderer because no card images are currently present.
+## Reconnection and lobby rules
 
-## Technology
+The browser stores a private room session in local storage under `president.activeRoomSession`. It contains a stable player ID and private reconnect token. On reconnection or refresh, the browser presents that credential to reclaim its original seat; a display name or room code alone cannot reclaim a seat.
 
-- Semantic HTML and mobile-first CSS
-- Vanilla browser JavaScript using ES modules
-- Node.js 24 and its built-in test runner
-- Express and Socket.IO
+- A disconnected player keeps their seat for 60 seconds.
+- Disconnecting clears that player's ready state.
+- Disconnected seats count toward the six-player limit and prevent the lobby becoming ready.
+- The host remains host throughout their grace period.
+- When a host leaves or expires, the earliest joined connected player becomes host; if all are disconnected, the earliest joined player is chosen.
+- The host may remove another player immediately.
+- A lobby is ready only with at least two players and when every player is connected and ready.
 
-No frontend framework or build step is used.
+Ready lobbies remain in the lobby until real game integration arrives.
 
-## Setup and development
+## Interface and demo screens
+
+Normal Home, Create, Join, and Lobby screens use live room communication. Stage 3 visual prototypes remain available only in demo mode:
+
+```text
+/?demo=1&screen=lobby
+/?demo=1&screen=game
+/?demo=1&screen=results
+```
+
+The interface targets portrait phone widths from 320px through 430px, supports safe areas and touch controls, and remains constrained on desktop.
+
+## Setup
+
+Requires Node.js 24 and npm.
 
 ```bash
 npm install
@@ -62,12 +67,15 @@ The server uses `PORT` when provided, otherwise port 3000.
 
 ## Testing
 
-Run the complete rules-engine and browser-utility suite:
+Run the rules-engine, browser-utility, validation, room-code, and room-manager tests:
 
 ```bash
 npm test
 ```
 
-Browser utility tests cover display-name and room-code handling, selection compatibility, hand layout, counts, and timer formatting. No DOM testing dependency is required.
+The project uses Node's built-in test runner and has no browser build step or external testing framework.
 
-The President rules are documented in [`docs/PRESIDENT_RULES.md`](docs/PRESIDENT_RULES.md).
+Further documentation:
+
+- [`docs/PRESIDENT_RULES.md`](docs/PRESIDENT_RULES.md)
+- [`docs/ROOM_SYSTEM.md`](docs/ROOM_SYSTEM.md)

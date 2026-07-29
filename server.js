@@ -4,10 +4,12 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 import express from "express";
 import { Server } from "socket.io";
+import { RoomManager, registerRoomSocketHandlers } from "./src/rooms/index.js";
 
 const app = express();
 const httpServer = http.createServer(app);
 const io = new Server(httpServer);
+const roomManager = new RoomManager();
 const port = process.env.PORT || 3000;
 const host = "0.0.0.0";
 const publicDirectory = path.join(
@@ -21,13 +23,7 @@ app.get("/health", (_request, response) => {
   response.json({ status: "ok" });
 });
 
-io.on("connection", (socket) => {
-  console.log(`Socket connected: ${socket.id}`);
-
-  socket.on("disconnect", (reason) => {
-    console.log(`Socket disconnected: ${socket.id} (${reason})`);
-  });
-});
+registerRoomSocketHandlers(io, roomManager);
 
 httpServer.on("error", (error) => {
   console.error("Server error:", error);
@@ -47,6 +43,7 @@ export const stopServer = (signal = "Shutdown") => {
 
   console.log(`${signal} received; shutting down`);
   shutdownPromise = new Promise((resolve) => {
+    roomManager.clear();
     io.close(() => {
       console.log("Server shut down");
       resolve();
