@@ -1,6 +1,6 @@
 const safeAck = (ack) => typeof ack === "function" ? ack : () => {};
 
-export const registerRoomSocketHandlers = (io, roomManager) => {
+export const registerRoomSocketHandlers = (io, roomManager, coordinator = null, publishGame = () => {}) => {
   const readyRooms = new Set();
   const broadcast = (room) => {
     if (!room) return;
@@ -11,8 +11,14 @@ export const registerRoomSocketHandlers = (io, roomManager) => {
     } else if (!room.canStart) readyRooms.delete(room.code);
   };
 
-  roomManager.onExpire = ({ room }) => {
-    if (room) broadcast(room);
+  roomManager.onBeforeRemove = ({ room, player }) => {
+    coordinator?.forfeit(room.code, player.id);
+  };
+  roomManager.onExpire = ({ room, code }) => {
+    if (room) {
+      broadcast(room);
+      publishGame(code);
+    } else coordinator?.deleteRoom(code);
   };
 
   io.on("connection", (socket) => {
@@ -45,13 +51,25 @@ export const registerRoomSocketHandlers = (io, roomManager) => {
         }
         broadcast(result.room);
       }
-      safeAck(ack)(result);
+      safeAck(ack)(result.ok && coordinator
+        ? { ...result, game: coordinator.getView(result.room.code, result.session.playerId) }
+        : result);
     });
 
     socket.on("room:setReady", (payload = {}, ack) => {
       const result = roomManager.setReady({ socketId: socket.id, ready: payload.ready });
-      if (result.ok) broadcast(result.room);
-      safeAck(ack)(result);
+      let response = result;
+      if (result.ok) {
+        broadcast(result.room);
+        const control = roomManager.getControl(socket.id);
+        const started = control ? coordinator?.maybeStart(control.code) : null;
+        if (started) {
+          const latestRoom = roomManager.getPublicRoom(control.code);
+          broadcast(latestRoom);
+          response = { ...result, room: latestRoom };
+        }
+      }
+      safeAck(ack)(response);
     });
 
     socket.on("room:kick", (payload = {}, ack) => {
@@ -61,6 +79,7 @@ export const registerRoomSocketHandlers = (io, roomManager) => {
         target?.emit("room:kicked");
         target?.leave(result.removed.roomCode);
         broadcast(result.room);
+        publishGame(result.removed.roomCode);
       }
       safeAck(ack)(result);
     });
@@ -70,13 +89,18 @@ export const registerRoomSocketHandlers = (io, roomManager) => {
       if (result.ok) {
         socket.leave(result.removed.roomCode);
         broadcast(result.room);
+        if (result.room) publishGame(result.removed.roomCode);
+        else coordinator?.deleteRoom(result.removed.roomCode);
       }
       safeAck(ack)(result);
     });
 
     socket.on("disconnect", () => {
       const result = roomManager.disconnect(socket.id);
-      if (result) broadcast(result.room);
+      if (result) {
+        broadcast(result.room);
+        publishGame(result.code);
+      }
     });
   });
 

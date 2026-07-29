@@ -2,9 +2,11 @@
 
 ## Lifecycle
 
-`RoomManager` owns in-memory lobby objects. Creating a room adds its host; joining adds a seat after validation. Voluntary leave and host kick remove seats immediately. An empty room is deleted.
+`RoomManager` owns in-memory room objects. Rooms progress through `lobby`, `playing`, and `round_complete`. Creating a room adds its host; joining is allowed only in the lobby. Voluntary leave and host kick remove seats immediately. An empty room is deleted.
 
 On disconnect, the player is marked offline and unready while their seat and host status are retained for 60 seconds. A valid resume cancels cleanup. Expiry removes the player, migrates the host when necessary, and deletes an empty room. Scheduling, time, ID generation, token generation, and randomness are injectable for deterministic tests.
+
+During a round, removal invokes the game coordinator first so an unfinished player forfeits before their room seat and reconnect credential are removed.
 
 ## Socket events
 
@@ -23,6 +25,8 @@ Client requests use acknowledgement responses with either `{ ok: true, ... }` or
 | `room:sessionReplaced` | server → client | Notify an older socket that a newer socket took control |
 | `room:readyToStart` | server → room | Announce the false-to-true ready transition |
 
+Successful resume acknowledgements include a personalised `game` view while the room is playing or showing results.
+
 ## Public and private data
 
 Public room views include the room code/status, capacity, readiness, host player ID, and sanitized player identity/status fields. They never include reconnect tokens, socket IDs, timer handles, maps, or internal lookup keys.
@@ -39,4 +43,4 @@ The creator is the first host. Host disconnection alone does not migrate ownersh
 
 ## Limitations
 
-Rooms exist in a single Node.js process and are not persisted or shared across instances. Restarts and redeployments remove them. There is no cross-instance coordination, account identity, matchmaking, or real game state in Stage 4.
+Rooms and games exist in a single Node.js process and are not persisted or shared across instances. Restarts and redeployments remove them. There is no cross-instance coordination, account identity, matchmaking, rematch, or next-round exchange yet.

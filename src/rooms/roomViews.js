@@ -1,6 +1,7 @@
 import { MAXIMUM_PLAYERS, MINIMUM_PLAYERS } from "./constants.js";
 
 export const canRoomStart = (room) =>
+  room.status === "lobby" &&
   room.players.length >= MINIMUM_PLAYERS &&
   room.players.every((player) => player.connected && player.ready);
 

@@ -1,0 +1,49 @@
+# Gameplay system
+
+## Automatic round start
+
+`GameCoordinator.maybeStart` starts exactly once when a lobby has at least two players and every seat is connected and ready. It snapshots stable player IDs and names, creates a shuffled round through the existing engine, changes the room to `playing`, clears ready flags, and creates the first deadline.
+
+## Hidden-information boundary
+
+Authoritative engine state stays on the server. Each socket receives a separately constructed view containing:
+
+- room status, round number, revision, server time, and turn deadline;
+- the controlled player's complete hand and public state;
+- opponent card counts, connection, pass, finish, forfeit, host, and current-turn states;
+- the exact cards in only the current public play;
+- public finishing order and final results.
+
+Views never contain another player's hand, reconnect tokens, socket IDs, discard history, removed cards, timer handles, maps, or authoritative state objects.
+
+## Game events
+
+| Event | Direction | Purpose |
+| --- | --- | --- |
+| `game:play` | client → server | Submit selected card IDs |
+| `game:pass` | client → server | Pass the controlled player's active-pile turn |
+| `game:update` | server → client | Send a fresh personalised view |
+| `game:roundStarted` | server → client | Announce automatic start with a personalised view |
+| `game:roundComplete` | server → client | Announce final results with a personalised view |
+
+The server derives room and player identity from the controlling socket. Clients cannot submit player IDs, room codes, hands, deadlines, roles, or positions.
+
+## Turn timer and timeouts
+
+Each playing room has exactly one timer record with an absolute `now + 30_000` deadline, expected player, and callback handle. Successful actions reset it. Invalid actions, disconnects, and resumes do not. Callbacks verify both expected player and deadline, so stale callbacks cannot affect newer turns.
+
+The server does not emit per-second ticks. Browsers estimate server clock offset from `serverTime` and render the deadline locally. The countdown does not enforce game state.
+
+An active-pile timeout uses authoritative pass logic. An empty-pile timeout advances without marking the player passed or altering their hand.
+
+## Reconnection and forfeits
+
+Disconnecting preserves the hand and active game seat for the room's 60-second grace period; turns continue and may time out. A valid token restores the same personalised hand and unchanged deadline. A newer valid socket replaces the older controller.
+
+An unfinished player forfeits when kicked, leaving voluntarily, or expiring. Their cards are removed rather than redistributed, they leave active turn order, and they reserve the lowest remaining position. Finished players keep earned positions. Timer state resets only when a forfeit changes the current player.
+
+## Completion
+
+When one active unfinished player remains, the engine completes standings using normal finishers, the last active player, and forfeited players in reverse forfeit order. Existing role assignment produces President through Scum. The coordinator clears the timer, stores names and results, changes the room to `round_complete`, and sends final personalised views.
+
+There are no rematches, exchanges, or consecutive rounds yet. All active state is in memory and disappears after server restart or redeployment.

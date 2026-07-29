@@ -27,5 +27,9 @@ export {
   playClearsPile,
   validatePlay,
 } from "./rules.js";
-export { createRound, passTurn, playCards } from "./gameEngine.js";
+export { createRound, forfeitPlayer, passTurn, playCards, timeoutTurn } from "./gameEngine.js";
 export { assignRoles, getExchangeRequirements } from "./roles.js";
+export { GameCoordinator } from "./gameCoordinator.js";
+export { createGameView } from "./gameViews.js";
+export { registerGameSocketHandlers } from "./gameSocketHandlers.js";
+export { TURN_DURATION_MS, TurnTimer } from "./turnTimer.js";

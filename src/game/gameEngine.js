@@ -14,6 +14,7 @@ const actionMessages = Object.freeze({
   [VALIDATION_CODES.PLAYER_ALREADY_FINISHED]: "This player has already finished.",
   [VALIDATION_CODES.PLAYER_NOT_FOUND]: "The player does not exist in this round.",
   [VALIDATION_CODES.ROUND_ALREADY_COMPLETE]: "The round is already complete.",
+  [VALIDATION_CODES.PLAYER_ALREADY_FORFEITED]: "This player has already forfeited.",
 });
 
 const reject = (state, code) => ({
@@ -47,7 +48,7 @@ function nextEligiblePlayerId(state, afterPlayerId, excludedIds = new Set()) {
   const startIndex = state.players.findIndex((player) => player.id === afterPlayerId);
   for (let offset = 1; offset <= state.players.length; offset += 1) {
     const player = state.players[(startIndex + offset) % state.players.length];
-    if (player.finishPosition === null && !excludedIds.has(player.id)) {
+    if (player.finishPosition === null && !state.forfeitedPlayerIds?.includes(player.id) && !excludedIds.has(player.id)) {
       return player.id;
     }
   }
@@ -63,16 +64,20 @@ function finishPlayer(players, playerId, position) {
 }
 
 function completeIfOneRemains(state) {
-  const unfinished = state.players.filter((player) => player.finishPosition === null);
+  const unfinished = state.players.filter((player) =>
+    player.finishPosition === null && !state.forfeitedPlayerIds?.includes(player.id));
   if (unfinished.length !== 1) {
     return state;
   }
   const finalPlayer = unfinished[0];
-  const finishOrder = [...state.finishOrder, finalPlayer.id];
+  const finishOrder = [...state.finishOrder, finalPlayer.id, ...[...(state.forfeitOrder ?? [])].reverse()];
   return {
     ...state,
     phase: "complete",
-    players: finishPlayer(state.players, finalPlayer.id, finishOrder.length),
+    players: state.players.map((player) => ({
+      ...player,
+      finishPosition: finishOrder.indexOf(player.id) + 1,
+    })),
     currentPlayerId: null,
     finishOrder,
   };
@@ -125,6 +130,9 @@ export function createRound({
     passedPlayerIds: [],
     lastSuccessfulPlayerId: null,
     finishOrder: [],
+    forfeitedPlayerIds: [],
+    forfeitOrder: [],
+    removedCards: [],
     openingPlayRequired: true,
   };
 }
@@ -259,4 +267,56 @@ export function passTurn(state, playerId) {
     ok: true,
     state: clearedPileState(stateAfterPass, leaderId),
   };
+}
+
+/**
+ * System-only action for an expired turn. On an active pile this follows the
+ * normal pass rules. On an empty pile it advances without marking the player
+ * as passed, since players cannot voluntarily pass while leading.
+ */
+export function timeoutTurn(state, playerId) {
+  if (state.phase === "complete") return reject(state, VALIDATION_CODES.ROUND_ALREADY_COMPLETE);
+  const player = state.players.find((candidate) => candidate.id === playerId);
+  if (!player) return reject(state, VALIDATION_CODES.PLAYER_NOT_FOUND);
+  if (player.finishPosition !== null) return reject(state, VALIDATION_CODES.PLAYER_ALREADY_FINISHED);
+  if (state.currentPlayerId !== playerId) return reject(state, VALIDATION_CODES.NOT_YOUR_TURN);
+  if (state.currentPlay) return passTurn(state, playerId);
+  const nextPlayerId = nextEligiblePlayerId(state, playerId);
+  return { ok: true, state: { ...state, currentPlayerId: nextPlayerId } };
+}
+
+export function forfeitPlayer(state, playerId) {
+  const player = state.players.find((candidate) => candidate.id === playerId);
+  if (!player) return reject(state, VALIDATION_CODES.PLAYER_NOT_FOUND);
+  if (state.forfeitedPlayerIds?.includes(playerId)) return reject(state, VALIDATION_CODES.PLAYER_ALREADY_FORFEITED);
+  if (state.phase === "complete") return reject(state, VALIDATION_CODES.ROUND_ALREADY_COMPLETE);
+  if (player.finishPosition !== null) return { ok: true, state };
+
+  const forfeitOrder = [...(state.forfeitOrder ?? []), playerId];
+  const forfeitedPlayerIds = [...(state.forfeitedPlayerIds ?? []), playerId];
+  const reservedPosition = state.players.length - forfeitOrder.length + 1;
+  const removedCards = [...(state.removedCards ?? []), ...player.hand.map((card) => ({ ...card }))];
+  const players = state.players.map((candidate) =>
+    candidate.id === playerId
+      ? { ...candidate, hand: [], finishPosition: reservedPosition }
+      : candidate);
+  let nextState = {
+    ...state,
+    players,
+    forfeitedPlayerIds,
+    forfeitOrder,
+    removedCards,
+    passedPlayerIds: state.passedPlayerIds.filter((id) => id !== playerId),
+  };
+
+  if (state.currentPlayerId === playerId) {
+    const nextId = nextEligiblePlayerId(nextState, playerId, new Set(nextState.passedPlayerIds));
+    nextState = { ...nextState, currentPlayerId: nextId };
+  }
+  if (state.lastSuccessfulPlayerId === playerId) {
+    const nextLeader = nextEligiblePlayerId(nextState, playerId);
+    nextState = clearedPileState(nextState, nextLeader);
+  }
+  nextState = completeIfOneRemains(nextState);
+  return { ok: true, state: nextState };
 }

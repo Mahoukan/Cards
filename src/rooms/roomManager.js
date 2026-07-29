@@ -34,12 +34,13 @@ export class RoomManager {
     createToken = () => randomBytes(32).toString("base64url"),
     graceMs = RECONNECT_GRACE_MS,
     onExpire = () => {},
+    onBeforeRemove = () => {},
   } = {}) {
     this.rooms = new Map();
     this.socketControls = new Map();
     this.removalTimers = new Map();
     this.now = now; this.schedule = schedule; this.cancelSchedule = cancelSchedule;
-    this.random = random; this.createId = createId; this.createToken = createToken; this.graceMs = graceMs; this.onExpire = onExpire;
+    this.random = random; this.createId = createId; this.createToken = createToken; this.graceMs = graceMs; this.onExpire = onExpire; this.onBeforeRemove = onBeforeRemove;
   }
 
   createRoom({ displayName, socketId }) {
@@ -49,7 +50,7 @@ export class RoomManager {
     const code = generateRoomCode({ exists: (candidate) => this.rooms.has(candidate), random: this.random });
     const player = this.#createPlayer(name, socketId);
     const timestamp = this.now();
-    const room = { code, status: ROOM_STATUS, hostPlayerId: player.id, createdAt: timestamp, updatedAt: timestamp, players: [player] };
+    const room = { code, status: ROOM_STATUS.LOBBY, hostPlayerId: player.id, createdAt: timestamp, updatedAt: timestamp, players: [player] };
     this.rooms.set(code, room); this.socketControls.set(socketId, { code, playerId: player.id });
     return this.#success(room, player);
   }
@@ -62,7 +63,7 @@ export class RoomManager {
     if (!name) return failure(ERROR_CODES.INVALID_DISPLAY_NAME);
     const room = this.rooms.get(code);
     if (!room) return failure(ERROR_CODES.ROOM_NOT_FOUND);
-    if (room.status !== ROOM_STATUS) return failure(ERROR_CODES.ROOM_NOT_JOINABLE);
+    if (room.status !== ROOM_STATUS.LOBBY) return failure(ERROR_CODES.ROOM_NOT_JOINABLE);
     if (room.players.length >= MAXIMUM_PLAYERS) return failure(ERROR_CODES.ROOM_FULL);
     if (room.players.some((player) => namesMatch(player.name, name))) return failure(ERROR_CODES.DISPLAY_NAME_TAKEN);
     const player = this.#createPlayer(name, socketId);
@@ -87,6 +88,7 @@ export class RoomManager {
   setReady({ socketId, ready }) {
     const controlled = this.#controlled(socketId);
     if (!controlled) return failure(ERROR_CODES.NOT_IN_ROOM);
+    if (controlled.room.status !== ROOM_STATUS.LOBBY) return failure(ERROR_CODES.ROOM_NOT_JOINABLE);
     controlled.player.ready = Boolean(ready); this.#touch(controlled.room);
     return { ok: true, room: createPublicRoomView(controlled.room) };
   }
@@ -98,14 +100,14 @@ export class RoomManager {
     if (playerId === controlled.player.id) return failure(ERROR_CODES.CANNOT_KICK_SELF);
     const target = controlled.room.players.find(({ id }) => id === playerId);
     if (!target) return failure(ERROR_CODES.PLAYER_NOT_FOUND);
-    const removed = this.#removePlayer(controlled.room, target);
+    const removed = this.#removePlayer(controlled.room, target, "kick");
     return { ok: true, room: createPublicRoomView(controlled.room), removed };
   }
 
   leaveRoom({ socketId }) {
     const controlled = this.#controlled(socketId);
     if (!controlled) return failure(ERROR_CODES.NOT_IN_ROOM);
-    const removed = this.#removePlayer(controlled.room, controlled.player);
+    const removed = this.#removePlayer(controlled.room, controlled.player, "leave");
     const room = this.rooms.get(controlled.room.code);
     return { ok: true, room: room ? createPublicRoomView(room) : null, removed };
   }
@@ -129,7 +131,7 @@ export class RoomManager {
     const room = this.rooms.get(roomCode);
     const player = room?.players.find(({ id }) => id === playerId);
     if (!room || !player || player.connected) return null;
-    const removed = this.#removePlayer(room, player);
+    const removed = this.#removePlayer(room, player, "expiry");
     const remaining = this.rooms.get(roomCode);
     return { removed, room: remaining ? createPublicRoomView(remaining) : null, code: roomCode };
   }
@@ -137,6 +139,10 @@ export class RoomManager {
   getPublicRoom(code) {
     const room = this.rooms.get(code);
     return room ? createPublicRoomView(room) : null;
+  }
+
+  getRoom(code) {
+    return this.rooms.get(code) ?? null;
   }
 
   getControl(socketId) {
@@ -161,7 +167,8 @@ export class RoomManager {
     const player = room?.players.find(({ id }) => id === control.playerId);
     return room && player && player.socketId === socketId && player.connected ? { room, player } : null;
   }
-  #removePlayer(room, player) {
+  #removePlayer(room, player, reason) {
+    this.onBeforeRemove({ room, player, reason });
     this.#cancelRemoval(room.code, player.id);
     this.socketControls.delete(player.socketId);
     room.players = room.players.filter(({ id }) => id !== player.id);

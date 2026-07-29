@@ -2,6 +2,15 @@
 
 This document is the authoritative rules specification for the isolated game engine.
 
+## Server-enforced system actions
+
+Normal player actions remain `playCards` and `passTurn`. Multiplayer coordination adds two server-only operations without weakening normal validation:
+
+- `timeoutTurn` treats an expired active-pile turn as a pass. On an empty pile it advances to the next eligible player without changing the timed-out hand or passed state.
+- `forfeitPlayer` removes an unfinished player's cards and active-turn eligibility. The first forfeit reserves the worst remaining position; later forfeits reserve progressively higher positions. Finished players retain their earned positions.
+
+Forfeited players are appended to final standings in reverse forfeit order after normal finishers. These operations are invoked only by the authoritative server timer and room lifecycle.
+
 ## Players and deck
 
 - A round supports two to six players.

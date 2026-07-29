@@ -1,42 +1,44 @@
 # President
 
-A mobile-first President card game for private groups.
+A mobile-first, server-authoritative President card game for private groups.
 
 ## Status
 
-Stage 4 adds real, server-authoritative private rooms and live Socket.IO lobbies. Players can create or join a room, share its code, toggle readiness, reconnect from the original browser, leave, and be removed by the host. Host migration and disconnected-player cleanup are handled by the server.
+Stage 5 connects the tested President engine to real Socket.IO rooms for one complete multiplayer round. Ready lobbies start automatically, the server shuffles and deals private hands, validates plays and passes, owns 30-second turns, handles forfeits, and produces real finishing roles.
 
-Real card gameplay is **not connected yet**. The President rules engine remains isolated and authoritative; dealing, playing, passing, timers, results, and exchanges will be integrated in Stage 5.
+Not implemented yet: rematches, next-round exchanges, consecutive rounds, accounts, persistence, matchmaking, chat, spectators, or bots.
 
-## Private rooms
+Rooms and active games exist only in one server process. A restart or Railway redeployment removes all rooms and games.
 
-Room codes contain four unambiguous uppercase letters or numbers. Create Room generates a new code; Join Room accepts a code from another player. Invite links use:
+## Playing
+
+Create a room and share its four-character code or invite URL:
 
 ```text
 /?room=ABCD
 ```
 
-The link opens the Join screen and prefills the code. It does not contain private credentials or submit automatically.
+When every connected player is ready and at least two players are present, the server starts the round immediately. The player holding 3♣ opens. The server sends each browser its own hand and only card counts for opponents.
 
-Rooms are stored only in server memory. A server restart, Railway restart, or redeployment removes every active room.
+Each turn has an absolute 30-second server deadline. A timeout passes on an active pile or skips the leader on an empty pile. The browser countdown is display-only.
 
-## Reconnection and lobby rules
+The original browser stores a private reconnect credential under `president.activeRoomSession`. Refreshing or reconnecting within 60 seconds restores the same seat and hand without resetting the turn deadline. Leaving, being kicked, or exceeding the grace period forfeits an unfinished round.
 
-The browser stores a private room session in local storage under `president.activeRoomSession`. It contains a stable player ID and private reconnect token. On reconnection or refresh, the browser presents that credential to reclaim its original seat; a display name or room code alone cannot reclaim a seat.
+## Room lifecycle
 
-- A disconnected player keeps their seat for 60 seconds.
-- Disconnecting clears that player's ready state.
-- Disconnected seats count toward the six-player limit and prevent the lobby becoming ready.
-- The host remains host throughout their grace period.
-- When a host leaves or expires, the earliest joined connected player becomes host; if all are disconnected, the earliest joined player is chosen.
-- The host may remove another player immediately.
-- A lobby is ready only with at least two players and when every player is connected and ready.
+Rooms progress through:
 
-Ready lobbies remain in the lobby until real game integration arrives.
+```text
+lobby → playing → round_complete
+```
 
-## Interface and demo screens
+Players may join and change readiness only in the lobby. The host may remove another player during the lobby or game. Host ownership migrates deterministically when the host leaves or expires.
 
-Normal Home, Create, Join, and Lobby screens use live room communication. Stage 3 visual prototypes remain available only in demo mode:
+After round completion, real finishing positions and roles are displayed. Rematch and card-exchange actions intentionally remain unavailable.
+
+## Demo mode
+
+Stage 3 visual prototypes remain isolated from real rooms:
 
 ```text
 /?demo=1&screen=lobby
@@ -44,38 +46,22 @@ Normal Home, Create, Join, and Lobby screens use live room communication. Stage 
 /?demo=1&screen=results
 ```
 
-The interface targets portrait phone widths from 320px through 430px, supports safe areas and touch controls, and remains constrained on desktop.
-
-## Setup
+## Setup and testing
 
 Requires Node.js 24 and npm.
 
 ```bash
 npm install
 npm run dev
+npm test
 ```
 
 Visit `http://localhost:3000`. The health endpoint is `http://localhost:3000/health`.
 
-For production-style local startup:
+The project uses semantic HTML, mobile-first CSS, browser ES modules, Express, Socket.IO, and Node's built-in test runner. There is no frontend build step or external testing framework.
 
-```bash
-npm start
-```
-
-The server uses `PORT` when provided, otherwise port 3000.
-
-## Testing
-
-Run the rules-engine, browser-utility, validation, room-code, and room-manager tests:
-
-```bash
-npm test
-```
-
-The project uses Node's built-in test runner and has no browser build step or external testing framework.
-
-Further documentation:
+Documentation:
 
 - [`docs/PRESIDENT_RULES.md`](docs/PRESIDENT_RULES.md)
 - [`docs/ROOM_SYSTEM.md`](docs/ROOM_SYSTEM.md)
+- [`docs/GAMEPLAY_SYSTEM.md`](docs/GAMEPLAY_SYSTEM.md)

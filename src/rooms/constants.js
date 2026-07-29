@@ -3,7 +3,11 @@ export const MAXIMUM_PLAYERS = 6;
 export const ROOM_CODE_LENGTH = 4;
 export const DISPLAY_NAME_MAX_LENGTH = 20;
 export const RECONNECT_GRACE_MS = 60_000;
-export const ROOM_STATUS = "lobby";
+export const ROOM_STATUS = Object.freeze({
+  LOBBY: "lobby",
+  PLAYING: "playing",
+  ROUND_COMPLETE: "round_complete",
+});
 export const ROOM_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 export const MAX_CODE_ATTEMPTS = 100;
 

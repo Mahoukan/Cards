@@ -100,8 +100,8 @@
         </div>
         <dialog id="game-menu" class="menu-dialog" aria-labelledby="menu-title">
           <h3 id="menu-title">Game menu</h3>
-          <button class="button button-secondary" type="button" data-go="lobby">Return to Lobby</button>
-          <button class="button button-quiet" type="button" data-go="home">Leave Game</button>
+          <button class="button button-secondary demo-only" type="button" data-go="lobby">Return to Lobby</button>
+          <button class="button button-quiet" id="game-leave-button" type="button">Leave Game</button>
           <button class="button button-primary" id="close-menu" type="button">Close Menu</button>
         </dialog>
       </section>
@@ -110,15 +110,16 @@
         <header class="result-hero"><p class="eyebrow">Round 1</p><h2 id="results-title">Round complete</h2><p>Jamie takes the table.</p></header>
         <div class="panel">
           <ol id="results-list" class="results-list"></ol>
-          <section class="exchange-summary" aria-labelledby="exchange-title">
+          <section class="exchange-summary demo-only" aria-labelledby="exchange-title">
             <h3 id="exchange-title">Next-round exchange</h3>
             <p>Scum gives their two highest cards to President; President returns two cards.</p>
             <p>Vice Scum gives their highest card to Vice President; Vice President returns one card.</p>
           </section>
+          <p class="callout real-only">Rematches and card exchanges will be added in the next stage.</p>
           <div class="stack">
-            <button class="button button-primary" type="button" data-go="lobby">Ready for Rematch</button>
-            <button class="button button-secondary" type="button" data-go="lobby">Return to Lobby</button>
-            <button class="button button-quiet" type="button" data-go="home">Leave Room</button>
+            <button class="button button-primary demo-only" type="button" data-go="lobby">Ready for Rematch</button>
+            <button class="button button-secondary demo-only" type="button" data-go="lobby">Return to Lobby</button>
+            <button class="button button-quiet" id="results-leave-button" type="button">Leave Room</button>
           </div>
         </div>
       </section>
