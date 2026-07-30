@@ -12,12 +12,15 @@ export const validatePayload = (payload, schema = {}) => {
   const value = {};
   for (const [key, rule] of Object.entries(schema)) {
     const item = payload[key];
+    if (item === undefined && rule.optional) continue;
     if (rule.type === "string") {
       if (typeof item !== "string" || item.length < (rule.min ?? 0) || item.length > (rule.max ?? Infinity)) return INVALID;
     } else if (rule.type === "boolean") {
       if (typeof item !== "boolean") return INVALID;
     } else if (rule.type === "stringArray") {
       if (!Array.isArray(item) || item.length > rule.max || item.some((entry) => typeof entry !== "string" || !entry || entry.length > (rule.itemMax ?? 100))) return INVALID;
+    } else if (rule.type === "any") {
+      // Authoritative domain validation handles this value.
     } else return INVALID;
     value[key] = item;
   }
@@ -68,4 +71,3 @@ export const socketRequest = ({ socket, event, schema, limiter, logger, handler 
     }
   });
 };
-

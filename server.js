@@ -28,7 +28,7 @@ export const createApplication = ({
     now,
   });
   const roomManager = new RoomManager({ graceMs: config.roomReconnectGraceMs });
-  const gameCoordinator = new GameCoordinator({ roomManager, turnDurationMs: config.turnDurationMs });
+  const gameCoordinator = new GameCoordinator({ roomManager, turnDurationMs: config.turnDurationMs, logger });
   let ready = false;
   let shutdownPromise = null;
   let forceTimer = null;

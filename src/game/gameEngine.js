@@ -1,4 +1,4 @@
-import { DECK_SIZE, MAX_PLAYERS, MIN_PLAYERS, VALIDATION_CODES } from "./constants.js";
+import { DECK_SIZE, MAX_PLAYERS, MIN_PLAYERS, THREE_OF_CLUBS_ID, VALIDATION_CODES } from "./constants.js";
 import {
   createDeck,
   dealCards,
@@ -15,6 +15,8 @@ const actionMessages = Object.freeze({
   [VALIDATION_CODES.PLAYER_NOT_FOUND]: "The player does not exist in this round.",
   [VALIDATION_CODES.ROUND_ALREADY_COMPLETE]: "The round is already complete.",
   [VALIDATION_CODES.PLAYER_ALREADY_FORFEITED]: "This player has already forfeited.",
+  [VALIDATION_CODES.CONSECUTIVE_NOT_AVAILABLE]: "Consecutive is not available for that play.",
+  INVALID_OPENING_STATE: "The opening turn could not be completed.",
 });
 
 const reject = (state, code) => ({
@@ -90,6 +92,9 @@ function clearedPileState(state, leaderId) {
     currentPlay: null,
     passedPlayerIds: [],
     lastSuccessfulPlayerId: null,
+    consecutiveActive: false,
+    nextPlayOverride: null,
+    pilePlayHistory: [],
   };
 }
 
@@ -124,6 +129,9 @@ export function createRound({
   if (!roundPlayers.some((player) => player.id === firstPlayerId)) {
     throw new Error("The starting player must be in the round.");
   }
+  if (openingPlayRequired && !roundPlayers.find((player) => player.id === firstPlayerId)?.hand.some((card) => card.id === THREE_OF_CLUBS_ID)) {
+    throw new Error("An opening round must start with the player holding the 3 of Clubs.");
+  }
 
   return {
     phase: "playing",
@@ -139,11 +147,31 @@ export function createRound({
     forfeitOrder: [],
     removedCards: [],
     openingPlayRequired,
+    consecutiveActive: false,
+    nextPlayOverride: null,
+    pilePlayHistory: [],
     lastAction: null,
   };
 }
 
-export function playCards(state, playerId, cardIds) {
+const normalisedSpecialState = (state) => ({
+  consecutiveActive: state.consecutiveActive ?? false,
+  nextPlayOverride: state.nextPlayOverride ?? null,
+  pilePlayHistory: state.pilePlayHistory ?? [],
+});
+
+const canDeclareConsecutive = (history, play) => {
+  if (play.isJoker) return false;
+  const latest = [...history, {
+    rank: play.rank, rankValue: play.value, count: play.count, playerId: play.playerId,
+  }].slice(-3);
+  return latest.length === 3
+    && latest.every((item) => item.count === latest[0].count)
+    && latest[1].rankValue === latest[0].rankValue + 1
+    && latest[2].rankValue === latest[1].rankValue + 1;
+};
+
+export function playCards(state, playerId, cardIds, { direction, consecutive = false } = {}) {
   if (state.phase === "complete") {
     return reject(state, VALIDATION_CODES.ROUND_ALREADY_COMPLETE);
   }
@@ -161,14 +189,25 @@ export function playCards(state, playerId, cardIds) {
   const selectedCards = cardIds.map((cardId) =>
     player.hand.find((card) => card.id === cardId) ?? { id: cardId },
   );
+  const special = normalisedSpecialState(state);
+  const targetedOverride = special.nextPlayOverride?.playerId === playerId
+    ? special.nextPlayOverride.direction : null;
   const validation = validatePlay({
     hand: player.hand,
     selectedCards,
     currentPlay: state.currentPlay,
     openingPlayRequired: state.openingPlayRequired,
+    direction,
+    overrideDirection: targetedOverride,
+    consecutiveActive: special.consecutiveActive,
   });
   if (!validation.ok) {
     return { ...validation, state };
+  }
+  if (consecutive && (special.consecutiveActive || !canDeclareConsecutive(special.pilePlayHistory, {
+    ...validation.play, playerId,
+  }))) {
+    return reject(state, VALIDATION_CODES.CONSECUTIVE_NOT_AVAILABLE);
   }
 
   const selectedIds = new Set(cardIds);
@@ -203,6 +242,12 @@ export function playCards(state, playerId, cardIds) {
     lastSuccessfulPlayerId: playerId,
     finishOrder,
     openingPlayRequired: false,
+    consecutiveActive: special.consecutiveActive || consecutive,
+    nextPlayOverride: null,
+    pilePlayHistory: validation.play.isJoker ? [] : [
+      ...special.pilePlayHistory,
+      { rank: validation.play.rank, rankValue: validation.play.value, count: validation.play.count, playerId },
+    ],
     lastAction: null,
   };
   nextState = completeIfOneRemains(nextState);
@@ -249,9 +294,11 @@ export function playCards(state, playerId, cardIds) {
   const passedIds = new Set([...nextState.passedPlayerIds, playerId]);
   const nextPlayerId = nextEligiblePlayerId(nextState, playerId, passedIds);
   if (nextPlayerId) {
+    const nextPlayOverride = validation.play.rank === "10"
+      ? { direction, playerId: nextPlayerId } : null;
     return {
       ok: true,
-      state: { ...nextState, currentPlayerId: nextPlayerId },
+      state: { ...nextState, currentPlayerId: nextPlayerId, nextPlayOverride },
     };
   }
 
@@ -280,7 +327,10 @@ export function passTurn(state, playerId) {
   }
 
   const passedPlayerIds = [...new Set([...state.passedPlayerIds, playerId])];
-  const stateAfterPass = { ...state, passedPlayerIds, lastAction: null };
+  const stateAfterPass = {
+    ...state, passedPlayerIds, lastAction: null,
+    nextPlayOverride: state.nextPlayOverride?.playerId === playerId ? null : (state.nextPlayOverride ?? null),
+  };
   const nextPlayerId = nextEligiblePlayerId(
     stateAfterPass,
     playerId,
@@ -317,6 +367,14 @@ export function timeoutTurn(state, playerId) {
   if (player.finishPosition !== null) return reject(state, VALIDATION_CODES.PLAYER_ALREADY_FINISHED);
   if (state.currentPlayerId !== playerId) return reject(state, VALIDATION_CODES.NOT_YOUR_TURN);
   if (state.currentPlay) return passTurn(state, playerId);
+  if (state.roundNumber === 1 && state.openingPlayRequired) {
+    if (!player.hand.some((card) => card.id === THREE_OF_CLUBS_ID)) return reject(state, "INVALID_OPENING_STATE");
+    const result = playCards(state, playerId, [THREE_OF_CLUBS_ID]);
+    return result.ok ? {
+      ...result,
+      state: { ...result.state, lastAction: { type: "opening_timeout", playerId, cardId: THREE_OF_CLUBS_ID } },
+    } : result;
+  }
   const nextPlayerId = nextEligiblePlayerId(state, playerId);
   return { ok: true, state: { ...state, currentPlayerId: nextPlayerId } };
 }
@@ -343,6 +401,8 @@ export function forfeitPlayer(state, playerId) {
     forfeitOrder,
     removedCards,
     passedPlayerIds: state.passedPlayerIds.filter((id) => id !== playerId),
+    nextPlayOverride: state.currentPlayerId === playerId && state.nextPlayOverride?.playerId === playerId
+      ? null : (state.nextPlayOverride ?? null),
   };
 
   if (state.currentPlayerId === playerId) {

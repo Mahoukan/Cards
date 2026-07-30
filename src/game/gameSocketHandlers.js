@@ -37,7 +37,16 @@ export const registerGameSocketHandlers = (io, roomManager, coordinator, { limit
   };
 
   io.on("connection", (socket) => {
-    socketRequest({ socket, event: "game:play", schema: { cardIds: { type: "stringArray", max: 4, itemMax: 100 } }, limiter, logger, handler: ({ cardIds }) => coordinator.play(socket.id, cardIds) });
+    socketRequest({
+      socket, event: "game:play",
+      schema: {
+        cardIds: { type: "stringArray", max: 4, itemMax: 100 },
+        direction: { type: "any", optional: true },
+        consecutive: { type: "boolean", optional: true },
+      },
+      limiter, logger,
+      handler: ({ cardIds, direction, consecutive }) => coordinator.play(socket.id, cardIds, { direction, consecutive }),
+    });
     socketRequest({ socket, event: "game:pass", schema: {}, limiter, logger, handler: () => coordinator.pass(socket.id) });
     socketRequest({ socket, event: "exchange:returnCards", schema: { cardIds: { type: "stringArray", max: 2, itemMax: 100 } }, limiter, logger, handler: ({ cardIds }) => coordinator.returnExchangeCards(socket.id, cardIds) });
   });

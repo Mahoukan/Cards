@@ -60,3 +60,27 @@ test("jokers remain private in hands and are serialisable when publicly cleared"
   assert.equal(publicView.lastAction.cards[0].isJoker, true);
   assert.doesNotThrow(() => JSON.stringify(publicView));
 });
+
+test("special-rule views are public, personalised, private-safe, and serialisable", () => {
+  const altered = {
+    ...state,
+    currentPlay: { playerId: "p1", rank: "10", value: 7, count: 1, cards: [{ id: "10-clubs", rank: "10", suit: "clubs", value: 7 }] },
+    consecutiveActive: true,
+    nextPlayOverride: { direction: "lower", playerId: "p2" },
+    pilePlayHistory: [
+      { rank: "9", rankValue: 6, count: 1, playerId: "p2" },
+      { rank: "10", rankValue: 7, count: 1, playerId: "p1" },
+    ],
+  };
+  const first = createGameView({ room, session: { ...session, state: altered }, playerId: "p1", serverTime: 100 });
+  const second = createGameView({ room, session: { ...session, state: altered }, playerId: "p2", serverTime: 100 });
+  assert.equal(first.consecutiveActive, true);
+  assert.equal(first.requiredNextRank, "J");
+  assert.deepEqual(first.nextPlayOverride, { direction: "lower", appliesToYou: false });
+  assert.equal(second.requiredNextRank, "9");
+  assert.deepEqual(second.nextPlayOverride, { direction: "lower", appliesToYou: true });
+  assert.equal("pilePlayHistory" in first, false);
+  const serialised = JSON.stringify(second);
+  for (const secret of ["socket-secret", "token-secret", "other-token"]) assert.equal(serialised.includes(secret), false);
+  assert.doesNotThrow(() => JSON.parse(serialised));
+});

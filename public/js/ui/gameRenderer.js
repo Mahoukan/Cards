@@ -1,12 +1,14 @@
 import { createCardElement } from "./cardRenderer.js";
 import { calculateHandLayout, getCardStackIndex } from "./handLayout.js";
 import { toggleCardSelection } from "./selection.js";
+import { canCallConsecutive, reconcileSpecialSelection, selectionNeedsDirection } from "./specialRules.js";
 
 const formatCount = (count) => `${count} card${count === 1 ? "" : "s"}`;
 
 export const createGameRenderer = ({ onPlay, onPass, onKick, onLeave }) => {
   const byId = (id) => document.getElementById(id);
   let view = null; let selectedIds = []; let connected = true; let busy = false;
+  let direction = null; let consecutive = false;
   let timerId = null; let clockOffset = 0; let resizeFrame = null;
   let announcedTurn = null; let warnedDeadline = null;
 
@@ -36,6 +38,9 @@ export const createGameRenderer = ({ onPlay, onPass, onKick, onLeave }) => {
     if (!view?.you) return;
     const owned = new Set(view.you.hand.map(({ id }) => id));
     selectedIds = selectedIds.filter((id) => owned.has(id));
+    ({ direction, consecutive } = reconcileSpecialSelection({
+      selectedIds, hand: view.you.hand, direction, consecutive, view,
+    }));
     document.querySelectorAll("[data-room-code]").forEach((node) => { node.textContent = view.roomCode; });
     document.querySelector(".round-label").textContent = `Round ${view.roundNumber}`;
     const opponents = view.players.filter(({ id }) => id !== view.you.id);
@@ -63,6 +68,10 @@ export const createGameRenderer = ({ onPlay, onPass, onKick, onLeave }) => {
       : view.currentPlay
       ? `${pilePlayer?.name ?? "Player"} played ${formatCount(view.currentPlay.count)} · ${view.currentPlay.rank}s`
       : view.openingPlayRequired ? "Opening play must include 3♣" : "The pile is empty";
+    if (view.lastAction?.type === "opening_timeout") {
+      const timedOut = view.players.find(({ id }) => id === view.lastAction.playerId);
+      byId("game-notice").textContent = `${timedOut?.name ?? "The opening player"} timed out, so 3♣ was played automatically.`;
+    }
     const current = view.players.find(({ id }) => id === view.currentPlayerId);
     if (view.currentPlayerId !== announcedTurn) {
       announcedTurn = view.currentPlayerId; warnedDeadline = null;
@@ -90,7 +99,18 @@ export const createGameRenderer = ({ onPlay, onPass, onKick, onLeave }) => {
     }));
     byId("hand-count").textContent = formatCount(view.you.hand.length);
     byId("play-button").textContent = selectedIds.length ? `Play ${selectedIds.length}` : "Play";
-    byId("play-button").disabled = !canAct() || selectedIds.length === 0;
+    const needsDirection = selectionNeedsDirection(selectedIds, view.you.hand);
+    const mayCallConsecutive = canCallConsecutive(selectedIds, view.you.hand, view);
+    byId("ten-direction-controls").hidden = !needsDirection;
+    byId("direction-higher").setAttribute("aria-pressed", String(direction === "higher"));
+    byId("direction-lower").setAttribute("aria-pressed", String(direction === "lower"));
+    byId("consecutive-controls").hidden = !mayCallConsecutive;
+    byId("call-consecutive").setAttribute("aria-pressed", String(consecutive));
+    if (consecutive) byId("play-button").textContent = "Play and Call Consecutive";
+    byId("active-rule-status").textContent = view.nextPlayOverride?.appliesToYou
+      ? `${view.nextPlayOverride.direction === "lower" ? "Lower" : "Higher"} applies to your next play`
+      : view.consecutiveActive ? `Consecutive: Next rank must be ${view.requiredNextRank ?? "the next rank"}` : "";
+    byId("play-button").disabled = !canAct() || selectedIds.length === 0 || (needsDirection && !direction);
     byId("pass-button").disabled = !canAct() || !view.currentPlay;
     requestAnimationFrame(layoutHand);
     renderTimer();
@@ -99,9 +119,9 @@ export const createGameRenderer = ({ onPlay, onPass, onKick, onLeave }) => {
   byId("play-button").addEventListener("click", async () => {
     if (!selectedIds.length || busy) return;
     busy = true; render();
-    const response = await onPlay([...selectedIds]);
+    const response = await onPlay([...selectedIds], { direction, consecutive });
     busy = false;
-    if (response.ok) { selectedIds = []; byId("game-notice").textContent = "Play accepted."; }
+    if (response.ok) { selectedIds = []; direction = null; consecutive = false; byId("game-notice").textContent = "Play accepted."; }
     else byId("game-notice").textContent = response.error?.message ?? "That play was rejected.";
     render();
   });
@@ -113,6 +133,9 @@ export const createGameRenderer = ({ onPlay, onPass, onKick, onLeave }) => {
     byId("game-notice").textContent = response.ok ? "Pass accepted." : response.error?.message ?? "That pass was rejected.";
     render();
   });
+  byId("direction-higher").addEventListener("click", () => { direction = "higher"; render(); });
+  byId("direction-lower").addEventListener("click", () => { direction = "lower"; render(); });
+  byId("call-consecutive").addEventListener("click", () => { consecutive = !consecutive; render(); });
   byId("game-leave-button").addEventListener("click", () => onLeave(view?.roomStatus !== "round_complete"));
   window.addEventListener("resize", () => {
     if (resizeFrame) cancelAnimationFrame(resizeFrame);
@@ -123,7 +146,7 @@ export const createGameRenderer = ({ onPlay, onPass, onKick, onLeave }) => {
     update(nextView) { view = nextView; clockOffset = Date.now() - nextView.serverTime; render(); },
     setConnected(value) { connected = value; render(); },
     setBusy(value) { busy = value; render(); },
-    clearSelection() { selectedIds = []; render(); },
+    clearSelection() { selectedIds = []; direction = null; consecutive = false; render(); },
     startTimer() { if (timerId === null) timerId = window.setInterval(renderTimer, 250); renderTimer(); },
     stopTimer() { if (timerId !== null) window.clearInterval(timerId); timerId = null; },
   };

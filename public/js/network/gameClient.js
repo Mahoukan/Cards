@@ -16,10 +16,11 @@ export const createGameClient = (socket, options) => {
   return {
     onUpdate(listener) { listeners.add(listener); return () => listeners.delete(listener); },
     accept,
-    async play(cardIds) {
+    async play(cardIds, { direction, consecutive = false } = {}) {
       if (busy) return { ok: false, error: { message: "An action is already pending." } };
       busy = true;
-      try { return await requester.request("game:play", { cardIds }); } finally { busy = false; }
+      const payload = { cardIds, ...(direction ? { direction } : {}), ...(consecutive ? { consecutive: true } : {}) };
+      try { return await requester.request("game:play", payload); } finally { busy = false; }
     },
     async pass() {
       if (busy) return { ok: false, error: { message: "An action is already pending." } };

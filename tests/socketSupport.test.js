@@ -9,6 +9,8 @@ test("payload validation accepts only plain objects and selected schema fields",
   assert.equal(validatePayload({ ready: "yes" }, { ready: { type: "boolean" } }).ok, false);
   assert.equal(validatePayload({ cardIds: ["x", "y", "z"] }, { cardIds: { type: "stringArray", max: 2 } }).ok, false);
   assert.deepEqual(validatePayload({ ready: true, host: true }, { ready: { type: "boolean" } }).value, { ready: true });
+  assert.deepEqual(validatePayload({}, { direction: { type: "string", optional: true } }).value, {});
+  assert.deepEqual(validatePayload({ consecutive: true }, { consecutive: { type: "boolean", optional: true } }).value, { consecutive: true });
 });
 
 test("socket action limits are per socket, reset by time, and clear on disconnect", () => {

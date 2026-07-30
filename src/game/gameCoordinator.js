@@ -7,12 +7,13 @@ import { createGameView } from "./gameViews.js";
 import { TurnTimer } from "./turnTimer.js";
 import { ROOM_STATUS } from "../rooms/constants.js";
 import { canPrepareNextRound, canRoomStart, createPublicRoomView } from "../rooms/roomViews.js";
+import { silentLogger } from "../logger.js";
 
 const failure = (code, message) => ({ ok: false, error: { code, message } });
 
 export class GameCoordinator {
-  constructor({ roomManager, now = Date.now, schedule = setTimeout, cancelSchedule = clearTimeout, turnDurationMs, random = Math.random, deckFactory = null, onChange = () => {} } = {}) {
-    this.roomManager = roomManager; this.now = now; this.random = random; this.deckFactory = deckFactory; this.onChange = onChange;
+  constructor({ roomManager, now = Date.now, schedule = setTimeout, cancelSchedule = clearTimeout, turnDurationMs, random = Math.random, deckFactory = null, onChange = () => {}, logger = silentLogger } = {}) {
+    this.roomManager = roomManager; this.now = now; this.random = random; this.deckFactory = deckFactory; this.onChange = onChange; this.logger = logger;
     this.sessions = new Map();
     this.exchangeSessions = new Map();
     this.timer = new TurnTimer({ now, schedule, cancelSchedule, ...(turnDurationMs === undefined ? {} : { durationMs: turnDurationMs }), onTimeout: (expected) => this.handleTimeout(expected) });
@@ -33,9 +34,9 @@ export class GameCoordinator {
     return session;
   }
 
-  play(socketId, cardIds) {
+  play(socketId, cardIds, options = {}) {
     if (!Array.isArray(cardIds) || cardIds.some((id) => typeof id !== "string")) return failure("INVALID_ACTION", "Choose valid card IDs.");
-    return this.#act(socketId, (session, playerId) => playCards(session.state, playerId, cardIds));
+    return this.#act(socketId, (session, playerId) => playCards(session.state, playerId, cardIds, options));
   }
 
   pass(socketId) {
@@ -46,7 +47,15 @@ export class GameCoordinator {
     const session = this.sessions.get(roomCode);
     if (!session || session.turnDeadline !== deadline || session.state.currentPlayerId !== playerId || session.state.phase !== "playing") return false;
     const result = timeoutTurn(session.state, playerId);
-    if (!result.ok) return false;
+    if (!result.ok) {
+      if (result.error.code === "INVALID_OPENING_STATE") {
+        this.logger.error("invalid_opening_timeout_state", {
+          roomCode, playerId, roundNumber: session.state.roundNumber,
+          openingPlayRequired: session.state.openingPlayRequired,
+        });
+      }
+      return false;
+    }
     this.#accept(roomCode, session, result.state, "update");
     return true;
   }

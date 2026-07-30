@@ -9,6 +9,7 @@ import { createGameRenderer } from "./ui/gameRenderer.js";
 import { createLobbyRenderer } from "./ui/lobbyRenderer.js";
 import { createResultsRenderer } from "./ui/resultsRenderer.js";
 import { createScreenManager, normaliseScreen } from "./ui/screenManager.js";
+import { createInstructionsDialog, getGameInstructions } from "./games/instructions.js";
 
 const params = new URLSearchParams(location.search);
 const demoMode = params.get("demo") === "1";
@@ -18,6 +19,11 @@ const connectionNodes = [...document.querySelectorAll("[data-connection]")];
 const setHomeMessage = (message) => { byId("home-message").textContent = message; };
 const updateConnection = (label, state) => connectionNodes.forEach((node) => {
   node.textContent = label; node.dataset.state = state;
+});
+const instructions = createInstructionsDialog({
+  dialog: byId("instructions-dialog"),
+  content: byId("instructions-content"),
+  closeButton: byId("close-instructions"),
 });
 
 const socket = typeof window.io === "function" ? window.io() : null;
@@ -75,7 +81,7 @@ if (demoMode) {
   };
 
   gameRenderer = createGameRenderer({
-    onPlay: (cardIds) => gameClient.play(cardIds),
+    onPlay: (cardIds, options) => gameClient.play(cardIds, options),
     onPass: () => gameClient.pass(),
     onKick: async (playerId) => {
       const response = await roomClient.kick(playerId);
@@ -184,6 +190,13 @@ if (demoMode) {
 } else updateConnection("Disconnected", "disconnected");
 
 document.addEventListener("click", (event) => {
+  const instructionsButton = event.target.closest("[data-instructions]");
+  if (instructionsButton) {
+    const trigger = byId("game-menu").open ? byId("menu-button") : instructionsButton;
+    if (byId("game-menu").open) byId("game-menu").close();
+    instructions.open(instructionsButton.dataset.instructions, trigger);
+    return;
+  }
   const link = event.target.closest("[data-go]");
   if (!link) return;
   if (!demoMode && ["game", "exchange", "results", "lobby"].includes(link.dataset.go)) return;
@@ -239,10 +252,14 @@ gameMenu.addEventListener("click", (event) => {
 });
 window.addEventListener("popstate", () => manager.show(new URLSearchParams(location.search).get("screen"), { updateHistory: false }));
 const sharedCode = normaliseRoomCode(params.get("room"));
+const requestedInstructions = params.get("instructions");
 if (sharedCode && !demoMode) {
   roomInput.value = sharedCode; manager.show("join", { updateHistory: false });
 } else {
   let initial = normaliseScreen(params.get("screen"));
   if (!demoMode && ["game", "exchange", "results", "lobby"].includes(initial)) initial = "home";
   manager.show(initial, { updateHistory: false });
+}
+if (getGameInstructions(requestedInstructions)) {
+  queueMicrotask(() => instructions.open(requestedInstructions, document.querySelector('[data-instructions="president"]')));
 }

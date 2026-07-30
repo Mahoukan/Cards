@@ -14,6 +14,8 @@ Record device, OS/browser version, deployment version, network, result, and scre
 - [ ] Large President exchange keeps quantity and Return reachable
 - [ ] On-screen keyboard does not permanently cover forms
 - [ ] No unintended page-width scroll; dialogs remain inside the viewport
+- [ ] How to Play opens from home, lobby, game menu, exchange, results, and relevant demo screens at 320px
+- [ ] Instructions scroll vertically, Escape and Close work, and focus returns to the opening control
 
 ## Touch and accessibility
 
@@ -25,6 +27,9 @@ Record device, OS/browser version, deployment version, network, result, and scre
 - [ ] Menu backdrop blocks content and focus returns when it closes
 - [ ] Connection, error, turn, ready, result, and exchange messages are concise
 - [ ] The timer is not announced every second
+- [ ] The instruction warning explains that the timer continues; live state updates remain ready underneath
+- [ ] Selecting tens reveals large Higher/Lower controls, requires one choice, and shows selection without relying on colour
+- [ ] Call Consecutive appears only for a qualifying selected play and active exact-rank guidance remains readable
 
 ## Card artwork
 
@@ -53,6 +58,12 @@ Record device, OS/browser version, deployment version, network, result, and scre
 
 - [ ] Invite link and code join
 - [ ] Turn timeout
+- [ ] Round 1 opening timeout publicly plays only the 3 of Clubs, starts one fresh timer, and play continues
+- [ ] `10 Lower → 3 → 5` consumes the override once and resumes ordinary higher play
+- [ ] `9 → 10 Lower → 9 → 10 Higher → J → Q` displays each required step correctly
+- [ ] Pass, timeout, and current-player removal consume a targeted ten override
+- [ ] Joker and legal 2 clears remove Consecutive, direction, and sequence indicators
+- [ ] Refresh/reconnect preserves a pending override, Consecutive indicator, and unchanged deadline
 - [ ] Host kick and host migration
 - [ ] Session replacement
 - [ ] Leaving during exchange

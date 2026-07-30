@@ -105,6 +105,30 @@ test("joker acceptance increments once and creates exactly one fresh timer; reje
   assert.equal(cancelled.length, 1);
   assert.equal(jobs.size, 1);
 });
+test("ten direction rejection changes neither revision nor timer and acceptance changes each once", () => {
+  const { coordinator, code, jobs, cancelled } = readyTwo();
+  const session = coordinator.maybeStart(code);
+  const byId = new Map(createDeck().map((card) => [card.id, card]));
+  session.state = {
+    ...session.state,
+    players: [
+      { ...session.state.players[0], hand: [{ ...byId.get("10-clubs") }, { ...byId.get("4-clubs") }] },
+      { ...session.state.players[1], hand: [{ ...byId.get("5-clubs") }, { ...byId.get("6-clubs") }] },
+    ],
+    currentPlayerId: "p1", currentPlay: null, openingPlayRequired: false,
+  };
+  const deadline = session.turnDeadline;
+  const originalJobs = jobs.size;
+  assert.equal(coordinator.play("s1", ["10-clubs"]).error.code, "TEN_REQUIRES_DIRECTION");
+  assert.equal(session.revision, 1);
+  assert.equal(session.turnDeadline, deadline);
+  assert.equal(jobs.size, originalJobs);
+  assert.equal(coordinator.play("s1", ["10-clubs"], { direction: "lower" }).ok, true);
+  assert.equal(session.revision, 2);
+  assert.equal(cancelled.length, 1);
+  assert.equal(jobs.size, 1);
+  assert.deepEqual(session.state.nextPlayOverride, { direction: "lower", playerId: "p2" });
+});
 test("passing updates the next turn while an empty-pile pass is rejected", () => {
   const { coordinator, code } = readyTwo();
   const session = coordinator.maybeStart(code);
@@ -123,6 +147,22 @@ test("valid timeout advances, while stale timeout is ignored", () => {
   assert.equal(coordinator.handleTimeout(expected), true);
   assert.equal(session.revision, 2);
 });
+test("opening timeout increments once, replaces one timer, and exposes only the public card", () => {
+  const { coordinator, code, jobs, cancelled } = readyTwo();
+  const session = coordinator.maybeStart(code);
+  const expected = { roomCode: code, playerId: session.state.currentPlayerId, deadline: session.turnDeadline };
+  assert.equal(coordinator.handleTimeout(expected), true);
+  assert.equal(session.revision, 2);
+  assert.equal(cancelled.length, 1);
+  assert.equal(jobs.size, 1);
+  assert.deepEqual(session.state.currentPlay.cards.map(({ id }) => id), ["3-clubs"]);
+  const publicView = coordinator.getView(code, "p2");
+  assert.deepEqual(publicView.lastAction, { type: "opening_timeout", playerId: "p1", cardId: "3-clubs" });
+  assert.equal(JSON.stringify(publicView.lastAction).includes("3-diamonds"), false);
+  assert.equal(coordinator.handleTimeout(expected), false);
+  assert.equal(session.revision, 2);
+  assert.equal(jobs.size, 1);
+});
 test("resume/disconnect do not reset a game deadline and views restore the same hand", () => {
   const { coordinator, manager, host, code } = readyTwo();
   const session = coordinator.maybeStart(code);
@@ -133,6 +173,28 @@ test("resume/disconnect do not reset a game deadline and views restore the same 
   assert.equal(resumed.ok, true);
   assert.equal(session.turnDeadline, deadline);
   assert.deepEqual(coordinator.getView(code, "p1").you.hand, hand);
+});
+test("resume preserves Consecutive, a pending personalised override, and the deadline", () => {
+  const { coordinator, manager, guest, code } = readyTwo();
+  const session = coordinator.maybeStart(code);
+  session.state = {
+    ...session.state,
+    consecutiveActive: true,
+    nextPlayOverride: { direction: "lower", playerId: "p2" },
+    pilePlayHistory: [
+      { rank: "9", rankValue: 6, count: 1, playerId: "p1" },
+      { rank: "10", rankValue: 7, count: 1, playerId: "p2" },
+    ],
+  };
+  const deadline = session.turnDeadline;
+  manager.disconnect("s2");
+  const resumed = manager.resumeRoom({ ...guest.session, socketId: "s2-new" });
+  assert.equal(resumed.ok, true);
+  const view = coordinator.getView(code, "p2");
+  assert.equal(view.consecutiveActive, true);
+  assert.deepEqual(view.nextPlayOverride, { direction: "lower", appliesToYou: true });
+  assert.equal(session.turnDeadline, deadline);
+  assert.deepEqual(session.state.nextPlayOverride, { direction: "lower", playerId: "p2" });
 });
 test("forfeiting the current player completes a two-player round with roles", () => {
   const { coordinator, manager, code } = readyTwo();

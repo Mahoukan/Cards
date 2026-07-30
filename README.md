@@ -4,6 +4,8 @@ President is a complete, mobile-first, in-memory multiplayer MVP for private gam
 
 The production MVP is ready for external phone testing. It remains deliberately focused on one game and has no accounts, public matchmaking, chat, bots, analytics, or stored match history. Rooms and active games are not persistent: a server restart or Railway redeployment ends them.
 
+President house rules include a required Higher/Lower choice whenever tens are played; that direction affects only the next eligible player's turn. Players completing three exactly ascending, same-sized plays may also call Consecutive, which requires exact upward ranks until the pile clears. A temporary Lower step resumes upward from the card actually played, while jokers retain precedence and clear all special state.
+
 ## Requirements
 
 - Node.js 24 (see `.nvmrc`)
@@ -51,3 +53,5 @@ Invalid numeric values fail startup with a clear server-side error. Environment 
 SVG playing-card artwork is integrated through the shared card renderer. Assets live in `public/assets/cards/` and standard cards use the engine-ID convention `<rank>-<suit>.svg`, such as `10-diamonds.svg` or `Q-clubs.svg`. Ranks are `A`, `2`–`10`, `J`, `Q`, and `K`; suits are `clubs`, `diamonds`, `hearts`, and `spades`.
 
 The accessible CSS/text face remains in every rendered card and appears automatically if an image is missing, blocked, or fails to load. `joker-black.svg` and `joker-red.svg` are active game cards: each is played alone, beats any active quantity, and immediately clears the pile. Selectable hands reserve lift headroom so selected cards remain visible while horizontal scrolling continues to work.
+
+Use **How to Play** from the home screen, lobby, game menu, exchange, or results. The accessible modal preserves the current screen and continues receiving authoritative updates; the server turn timer does not pause. `/?instructions=president` opens it directly. Its serialisable registry in `public/js/games/instructions.js` is designed to add other games later without duplicating long rules text.

@@ -39,7 +39,13 @@ A successful joker play is one accepted action: revision increments once, the pi
 
 The server does not emit per-second ticks. Browsers estimate server clock offset from `serverTime` and render the deadline locally. The countdown does not enforce game state.
 
-An active-pile timeout uses authoritative pass logic. An empty-pile timeout advances without marking the player passed or altering their hand.
+An active-pile timeout uses authoritative pass logic. An empty-pile timeout normally advances without marking the player passed or altering their hand. The Round 1 opening timeout is deterministic: `timeoutTurn` submits only `3-clubs` through the normal play transition. That removes and publishes the card, clears the opening requirement, advances or finishes normally, increments the revision once, and replaces the expired timer with one new timer. Corrupted opening state is rejected and logged without hand details.
+
+## Tens and Consecutive state
+
+Authoritative round state stores `nextPlayOverride`, `consecutiveActive`, and public-only `pilePlayHistory`. A ten requires a validated direction and targets the next eligible player. Successful play, pass, timeout, or current-player forfeit consumes that target; rejection does not. Consecutive activation validates the latest three normal same-quantity plays, then enforces an exact upward rank until the pile clears.
+
+Jokers bypass these comparisons and clear all three fields. Twos must satisfy the active ordinary, temporary direction, or exact Consecutive comparison before their normal clear. Accepted plays—including declarations—increment once and start one timer; rejected options change neither revision nor deadline. Personalised views expose status, required rank, public direction, and whether the override applies to that viewer, never the authoritative target ID or hidden cards. Resume reconstructs this view from unchanged server state and preserves the deadline.
 
 ## Reconnection and forfeits
 
@@ -58,3 +64,7 @@ Round numbers increment when a prepared exchange becomes the next active game se
 The browser uses shared selectable-hand layout headroom equal to the card lift distance. Lifted and focused cards remain visible without disabling horizontal hand scrolling, including at 320px width.
 
 All active state is in memory and disappears after server restart or redeployment.
+
+## Player instructions
+
+The reusable serialisable catalog at `public/js/games/instructions.js` owns President's player-facing instructions under the stable `president` ID. One accessible modal renders that catalog from the home, lobby, active-game menu, exchange, results, and demo versions of those screens. `/?instructions=president` is the safe direct route; invalid IDs are ignored. Opening it does not navigate, mutate the session, or interrupt incoming views, and the authoritative timer continues.

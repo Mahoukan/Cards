@@ -11,10 +11,12 @@ const stateWith = ({
   lastSuccessfulPlayerId = null,
   passedPlayerIds = [],
   finishOrder = [],
+  roundNumber = 1,
+  openingPlayRequired = false,
 }) => ({
-  phase: "playing", roundNumber: 1, players, currentPlayerId, currentPlay,
+  phase: "playing", roundNumber, players, currentPlayerId, currentPlay,
   discardPile: [], passedPlayerIds, lastSuccessfulPlayerId, finishOrder,
-  openingPlayRequired: false, forfeitedPlayerIds: [], forfeitOrder: [], removedCards: [],
+  openingPlayRequired, forfeitedPlayerIds: [], forfeitOrder: [], removedCards: [],
 });
 const play = (playerId, id) => {
   const card = cards.get(id);
@@ -27,6 +29,45 @@ test("empty-pile timeout advances without marking the player passed", () => {
   assert.equal(result.state.currentPlayerId, "p2");
   assert.deepEqual(result.state.passedPlayerIds, []);
   assert.deepEqual(result.state.players[0].hand, state.players[0].hand);
+});
+test("Round 1 opening timeout authoritatively plays only the 3 of Clubs", () => {
+  const state = stateWith({
+    players: [player("p1", ["3-clubs", "3-hearts", "8-clubs"]), player("p2", ["4-clubs", "5-clubs"])],
+    openingPlayRequired: true,
+  });
+  const result = timeoutTurn(state, "p1");
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.state.currentPlay.cards.map(({ id }) => id), ["3-clubs"]);
+  assert.deepEqual(result.state.players[0].hand.map(({ id }) => id), ["3-hearts", "8-clubs"]);
+  assert.deepEqual(result.state.discardPile.map(({ id }) => id), ["3-clubs"]);
+  assert.deepEqual(result.state.passedPlayerIds, []);
+  assert.equal(result.state.openingPlayRequired, false);
+  assert.equal(result.state.currentPlayerId, "p2");
+  assert.deepEqual(result.state.lastAction, { type: "opening_timeout", playerId: "p1", cardId: "3-clubs" });
+});
+test("opening timeout finishes normally when the 3 of Clubs is the final card", () => {
+  const state = stateWith({
+    players: [player("p1", ["3-clubs"]), player("p2", ["4-clubs"]), player("p3", ["5-clubs"])],
+    openingPlayRequired: true,
+  });
+  const result = timeoutTurn(state, "p1");
+  assert.equal(result.state.players[0].finishPosition, 1);
+  assert.deepEqual(result.state.finishOrder, ["p1"]);
+  assert.equal(result.state.currentPlayerId, "p2");
+});
+test("corrupted opening timeout fails safely and later-round empty piles still skip", () => {
+  const corrupted = stateWith({
+    players: [player("p1", ["4-clubs"]), player("p2", ["3-clubs"])],
+    openingPlayRequired: true,
+  });
+  const rejected = timeoutTurn(corrupted, "p1");
+  assert.equal(rejected.error.code, "INVALID_OPENING_STATE");
+  assert.strictEqual(rejected.state, corrupted);
+  const later = stateWith({
+    players: [player("p1", ["4-clubs"]), player("p2", ["3-clubs"])],
+    roundNumber: 2,
+  });
+  assert.equal(timeoutTurn(later, "p1").state.currentPlayerId, "p2");
 });
 test("active-pile timeout behaves like an authoritative pass", () => {
   const state = stateWith({

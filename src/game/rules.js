@@ -8,6 +8,10 @@ const messages = Object.freeze({
   [VALIDATION_CODES.MIXED_RANKS]: "All selected cards must have the same rank.",
   [VALIDATION_CODES.WRONG_CARD_COUNT]: "The play must contain the same number of cards as the active play.",
   [VALIDATION_CODES.RANK_NOT_HIGHER]: "The play must have a higher rank than the active play.",
+  [VALIDATION_CODES.RANK_NOT_LOWER]: "The play must have a lower rank than the active play.",
+  [VALIDATION_CODES.RANK_NOT_CONSECUTIVE]: "The play must be exactly one rank in the required direction.",
+  [VALIDATION_CODES.TEN_REQUIRES_DIRECTION]: "Choose whether the next player must play higher or lower.",
+  [VALIDATION_CODES.INVALID_PLAY_DIRECTION]: "The direction must be higher or lower.",
   [VALIDATION_CODES.OPENING_MUST_INCLUDE_3_OF_CLUBS]: "The opening play must include the 3 of Clubs.",
   [VALIDATION_CODES.JOKER_MUST_BE_PLAYED_ALONE]: "A joker must be played alone.",
   [VALIDATION_CODES.JOKER_CANNOT_BE_BEATEN]: "No card can beat a joker.",
@@ -59,6 +63,9 @@ export function validatePlay({
   selectedCards,
   currentPlay = null,
   openingPlayRequired = false,
+  direction,
+  overrideDirection = null,
+  consecutiveActive = false,
 }) {
   if (!isNonEmptySelection(selectedCards)) {
     return invalid(VALIDATION_CODES.EMPTY_SELECTION);
@@ -87,11 +94,25 @@ export function validatePlay({
   if (play.isJoker) {
     return { ok: true, play };
   }
+  if (play.rank === "10") {
+    if (direction === undefined) return invalid(VALIDATION_CODES.TEN_REQUIRES_DIRECTION);
+    if (typeof direction !== "string" || !["higher", "lower"].includes(direction)) {
+      return invalid(VALIDATION_CODES.INVALID_PLAY_DIRECTION);
+    }
+  }
   if (currentPlay && play.count !== currentPlay.count) {
     return invalid(VALIDATION_CODES.WRONG_CARD_COUNT);
   }
-  if (currentPlay && play.value <= currentPlay.value) {
-    return invalid(VALIDATION_CODES.RANK_NOT_HIGHER);
+  if (currentPlay) {
+    const requiredDirection = overrideDirection ?? "higher";
+    if (consecutiveActive) {
+      const step = requiredDirection === "lower" ? -1 : 1;
+      if (play.value !== currentPlay.value + step) return invalid(VALIDATION_CODES.RANK_NOT_CONSECUTIVE);
+    } else if (requiredDirection === "lower" && play.value >= currentPlay.value) {
+      return invalid(VALIDATION_CODES.RANK_NOT_LOWER);
+    } else if (requiredDirection === "higher" && play.value <= currentPlay.value) {
+      return invalid(VALIDATION_CODES.RANK_NOT_HIGHER);
+    }
   }
   return { ok: true, play };
 }

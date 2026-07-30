@@ -6,7 +6,7 @@ This document is the authoritative rules specification for the isolated game eng
 
 Normal player actions remain `playCards` and `passTurn`. Multiplayer coordination adds two server-only operations without weakening normal validation:
 
-- `timeoutTurn` treats an expired active-pile turn as a pass. On an empty pile it advances to the next eligible player without changing the timed-out hand or passed state.
+- `timeoutTurn` treats an expired active-pile turn as a pass. On an empty pile it normally advances without changing the timed-out hand or passed state. During the required Round 1 opening, it instead plays exactly the 3 of Clubs through normal authoritative play validation.
 - `forfeitPlayer` removes an unfinished player's cards and active-turn eligibility. The first forfeit reserves the worst remaining position; later forfeits reserve progressively higher positions. Finished players retain their earned positions.
 
 Forfeited players are appended to final standings in reverse forfeit order after normal finishers. These operations are invoked only by the authoritative server timer and room lifecycle.
@@ -43,6 +43,8 @@ Ranks increase in this order:
 ## Opening rounds
 
 In Round 1, the player holding the 3 of Clubs takes the first turn. Their first successful play must include that card. It may be played alone or as part of a pair, triple, or four of a kind. This restriction ends after the first successful play.
+
+If that opening player times out, the server automatically plays the 3 of Clubs alone. The player is not marked passed, and normal finishing and turn-order rules apply. Round creation rejects an opening state whose starting player does not hold the required card.
 
 In Round 2 and later, Scum from the recalculated current-room roles starts. The opening pile is empty, `openingPlayRequired` is false, and the first play does not need to contain the 3 of Clubs.
 
@@ -85,6 +87,22 @@ The last successful player leads the new pile if they still hold cards. If they 
 A legal play of one or more twos clears the pile immediately. Twos must still match the active play's card count: a pair of twos can beat a pair but cannot answer a single.
 
 The player who played the twos leads the new pile if they still have cards. If that play emptied their hand, the next unfinished player in turn order leads.
+
+## Tens: Higher or Lower
+
+Every play of one or more tens requires a `higher` or `lower` choice. Quantity matching remains unchanged. The choice targets only the next eligible player's turn: outside Consecutive, Higher permits any matching higher rank and Lower permits any matching lower rank.
+
+The override expires when its target successfully plays, passes, times out, or forfeits while current. Rejected and stale actions do not consume it. The following player compares normally against the card actually played: `10 Lower → 3 → 5` is legal. A targeted player may always use a standalone joker, which clears the override and pile.
+
+## Consecutive
+
+The player completing three exactly ascending, same-quantity normal plays on the current pile may call Consecutive. Jokers, quantity changes, skipped ranks, descending ranks, and cleared-pile history do not qualify.
+
+While active, each normal play must match quantity and be exactly one rank higher. Progression follows `3` through `2`; a valid 2 after Ace clears the pile. Passing does not end Consecutive, but any pile clear resets it and its history.
+
+A ten still requires Higher or Lower. Higher requires exactly Jack next; Lower requires exactly 9 next. The override lasts for that one target, then upward progression resumes from the card actually played. Thus `9 → 10 Lower → 9 → 10 Higher → J → Q` is legal. If the Lower target passes or times out, the unchanged ten remains on top and the following player must play Jack.
+
+Jokers take precedence over direction, quantity, and the required Consecutive rank. They retain their existing standalone clear behavior and reset Consecutive, history, and any pending override.
 
 ## Finishing and round completion
 

@@ -32,6 +32,14 @@ test("game client sends only selected IDs and no identity fields", async () => {
   requests[0].ack({ ok: true, revision: 2 });
   assert.deepEqual(await pending, { ok: true, revision: 2 });
 });
+test("game client sends only allowed ten and Consecutive options", async () => {
+  const { socket, requests } = socketHarness();
+  const client = createGameClient(socket);
+  const pending = client.play(["10-hearts"], { direction: "lower", consecutive: true, playerId: "secret" });
+  assert.deepEqual(requests[0].payload, { cardIds: ["10-hearts"], direction: "lower", consecutive: true });
+  requests[0].ack({ ok: true, revision: 2 });
+  await pending;
+});
 test("pending actions prevent duplicate rapid submissions", async () => {
   const { socket, requests } = socketHarness();
   const client = createGameClient(socket);

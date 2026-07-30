@@ -5,6 +5,14 @@ const serialisableCard = (card) => ({
   value: card.value,
   ...(card.isJoker ? { color: card.color, isJoker: true } : {}),
 });
+const RANKS = ["3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K", "A", "2"];
+
+const consecutiveOpportunity = (state) => {
+  if (state.consecutiveActive) return false;
+  const history = state.pilePlayHistory ?? [];
+  const [first, second] = history.slice(-2);
+  return Boolean(first && second && first.count === second.count && second.rankValue === first.rankValue + 1 && second.rankValue < RANKS.length - 1);
+};
 
 export const createGameView = ({ room, session, playerId, serverTime }) => {
   const ownState = session.state.players.find(({ id }) => id === playerId);
@@ -54,11 +62,24 @@ export const createGameView = ({ room, session, playerId, serverTime }) => {
       cards: session.state.currentPlay.cards.map(serialisableCard),
     } : null,
     lastAction: session.state.lastAction?.type === "joker_clear" ? {
-      type: "joker_clear",
-      playerId: session.state.lastAction.playerId,
+      type: "joker_clear", playerId: session.state.lastAction.playerId,
       cards: session.state.lastAction.cards.map(serialisableCard),
+    } : session.state.lastAction?.type === "opening_timeout" ? {
+      type: "opening_timeout", playerId: session.state.lastAction.playerId, cardId: "3-clubs",
     } : null,
     openingPlayRequired: session.state.openingPlayRequired,
+    consecutiveActive: session.state.consecutiveActive ?? false,
+    requiredNextRank: session.state.consecutiveActive && session.state.currentPlay
+      ? RANKS[session.state.currentPlay.value + (
+          session.state.nextPlayOverride?.playerId === playerId
+            && session.state.nextPlayOverride.direction === "lower" ? -1 : 1
+        )] ?? null
+      : null,
+    nextPlayOverride: session.state.nextPlayOverride ? {
+      direction: session.state.nextPlayOverride.direction,
+      appliesToYou: session.state.nextPlayOverride.playerId === playerId,
+    } : null,
+    consecutiveAvailable: consecutiveOpportunity(session.state),
     turnDeadline: session.turnDeadline,
     serverTime,
     finishOrder: session.state.finishOrder.map((id) => ({ playerId: id, name: participantName.get(id) })),
