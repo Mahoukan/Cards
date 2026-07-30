@@ -7,6 +7,10 @@ export const SUITS = Object.freeze([
 ]);
 
 export const THREE_OF_CLUBS_ID = "3-clubs";
+export const JOKER_RANK = "JOKER";
+export const JOKER_VALUE = RANKS.length;
+export const JOKER_IDS = Object.freeze(["joker-black", "joker-red"]);
+export const DECK_SIZE = 54;
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 6;
 
@@ -24,6 +28,8 @@ export const VALIDATION_CODES = Object.freeze({
   PLAYER_NOT_FOUND: "PLAYER_NOT_FOUND",
   ROUND_ALREADY_COMPLETE: "ROUND_ALREADY_COMPLETE",
   PLAYER_ALREADY_FORFEITED: "PLAYER_ALREADY_FORFEITED",
+  JOKER_MUST_BE_PLAYED_ALONE: "JOKER_MUST_BE_PLAYED_ALONE",
+  JOKER_CANNOT_BE_BEATEN: "JOKER_CANNOT_BE_BEATEN",
 });
 
 export const ROLE_NAMES = Object.freeze({

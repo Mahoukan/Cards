@@ -71,6 +71,40 @@ test("legal play advances revision and resets timer; invalid play changes neithe
   assert.equal(coordinator.play("s1", ["3-clubs"]).ok, false);
   assert.equal(session.revision, 2);
 });
+
+test("joker acceptance increments once and creates exactly one fresh timer; rejection changes neither", () => {
+  const { coordinator, code, jobs, cancelled } = readyTwo();
+  const session = coordinator.maybeStart(code);
+  const byId = new Map(createDeck().map((card) => [card.id, card]));
+  session.state = {
+    ...session.state,
+    players: [
+      { ...session.state.players[0], hand: [{ ...byId.get("joker-black") }, { ...byId.get("4-clubs") }] },
+      { ...session.state.players[1], hand: [{ ...byId.get("5-clubs") }, { ...byId.get("6-clubs") }] },
+    ],
+    currentPlayerId: "p1",
+    currentPlay: {
+      playerId: "p2", rank: "K", value: 10, count: 2,
+      cards: [{ ...byId.get("K-clubs") }, { ...byId.get("K-diamonds") }],
+    },
+    openingPlayRequired: false,
+  };
+  const originalDeadline = session.turnDeadline;
+  const originalJobs = jobs.size;
+  const invalid = coordinator.play("s1", ["joker-black", "4-clubs"]);
+  assert.equal(invalid.error.code, "JOKER_MUST_BE_PLAYED_ALONE");
+  assert.equal(session.revision, 1);
+  assert.equal(session.turnDeadline, originalDeadline);
+  assert.equal(jobs.size, originalJobs);
+
+  const accepted = coordinator.play("s1", ["joker-black"]);
+  assert.equal(accepted.ok, true);
+  assert.equal(session.revision, 2);
+  assert.equal(session.state.currentPlay, null);
+  assert.equal(session.state.currentPlayerId, "p1");
+  assert.equal(cancelled.length, 1);
+  assert.equal(jobs.size, 1);
+});
 test("passing updates the next turn while an empty-pile pass is rejected", () => {
   const { coordinator, code } = readyTwo();
   const session = coordinator.maybeStart(code);

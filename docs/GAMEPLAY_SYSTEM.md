@@ -14,6 +14,7 @@ Authoritative engine state stays on the server. Each socket receives a separatel
 - the controlled player's complete hand and public state;
 - opponent card counts, connection, pass, finish, forfeit, host, and current-turn states;
 - the exact cards in only the current public play;
+- a safe public joker-clear notice and joker card after an immediate clear;
 - public finishing order and final results.
 
 Views never contain another player's hand, reconnect tokens, socket IDs, discard history, removed cards, timer handles, maps, or authoritative state objects.
@@ -34,6 +35,8 @@ The server derives room and player identity from the controlling socket. Clients
 
 Each playing room has exactly one timer record with an absolute `now + 30_000` deadline, expected player, and callback handle. Successful actions reset it. Invalid actions, disconnects, and resumes do not. Callbacks verify both expected player and deadline, so stale callbacks cannot affect newer turns.
 
+A successful joker play is one accepted action: revision increments once, the pile clears immediately, and exactly one fresh timer starts for the correct next leader. Rejected joker actions change neither revision nor deadline.
+
 The server does not emit per-second ticks. Browsers estimate server clock offset from `serverTime` and render the deadline locally. The countdown does not enforce game state.
 
 An active-pile timeout uses authoritative pass logic. An empty-pile timeout advances without marking the player passed or altering their hand.
@@ -51,5 +54,7 @@ When one active unfinished player remains, the engine completes standings using 
 ## Multiple rounds
 
 Round numbers increment when a prepared exchange becomes the next active game session. Round 1 keeps the 3 of Clubs opening requirement. Round 2 and later use the recalculated Scum as `currentPlayerId`, set `openingPlayRequired` to false, and start a normal 30-second turn timer only after every required exchange is complete.
+
+The browser uses shared selectable-hand layout headroom equal to the card lift distance. Lifted and focused cards remain visible without disabling horizontal hand scrolling, including at 320px width.
 
 All active state is in memory and disappears after server restart or redeployment.

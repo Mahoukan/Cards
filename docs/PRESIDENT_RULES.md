@@ -14,9 +14,9 @@ Forfeited players are appended to final standings in reverse forfeit order after
 ## Players and deck
 
 - A round supports two to six players.
-- One standard 52-card deck is used, without jokers.
+- A 54-card deck is used: 52 standard cards, one black joker, and one red joker.
 - Every card is dealt, one at a time in player order.
-- When 52 is not divisible evenly, earlier players receive one more card.
+- When 54 is not divisible evenly, earlier players receive one more card.
 - Suits have no gameplay ranking.
 
 Cards are plain serialisable objects with stable IDs, such as:
@@ -46,6 +46,8 @@ In Round 1, the player holding the 3 of Clubs takes the first turn. Their first 
 
 In Round 2 and later, Scum from the recalculated current-room roles starts. The opening pile is empty, `openingPlayRequired` is false, and the first play does not need to contain the 3 of Clubs.
 
+A joker cannot replace the required 3 of Clubs opening play in Round 1. In later rounds, Scum may lead a joker.
+
 ## Legal plays
 
 - A play contains one to four cards of the same rank.
@@ -54,6 +56,16 @@ In Round 2 and later, Scum from the recalculated current-room roles starts. The 
 - The answering rank must be strictly higher than the active rank.
 - Equal and lower ranks are illegal.
 - Suits never break ties or otherwise affect legality.
+
+## Jokers
+
+- A joker must be played alone; two jokers or a joker plus a normal card are illegal.
+- A standalone joker beats any active normal single, pair, triple, or four of a kind.
+- A joker led on an empty pile is also legal outside the Round 1 opening restriction.
+- A successful joker immediately clears the pile and resets passed players.
+- The joker player leads again if they retain cards. If it was their final card, they finish normally and the next unfinished player leads.
+- Playing a joker finishes only the player whose hand became empty; normal round-completion rules still apply.
+- Black and red jokers are equivalent in gameplay. Red sorts above black only for deterministic sorting and exchanges.
 
 ## Passing
 
@@ -105,19 +117,20 @@ The game coordinator executes required exchanges before Round 2 and later.
 - With two or three players, only President and Scum exchange.
 - Scum begins the next round after exchanges.
 - President and Vice President may return any cards they currently hold, including cards they just received.
+- Jokers rank above twos for automatic exchange selection and may be returned by a higher-role player.
 - Returned cards must be unique, owned by the returning player, and match the exact required quantity.
 
 Highest-card selection uses gameplay rank first. Tied ranks use `clubs, diamonds, hearts, spades` as an ascending deterministic suit order. This ordering exists only for deterministic selection and never affects play legality.
 
 ## Explicitly excluded variants
 
-The engine does not implement jokers, revolution, suit ranking, equal-rank skips, transparent eights, straights, sequences, bombs, or four-of-a-kind clearing.
+The engine does not implement revolution, suit ranking, equal-rank skips, transparent eights, straights, sequences, bombs, or four-of-a-kind clearing.
 
 Rooms, networking, timers, reconnection, lobby behaviour, browser controls, accounts, databases, and matchmaking are outside this engine.
 
 ## Engine assumptions
 
-- A configured round deck contains exactly 52 uniquely identified cards and includes the 3 of Clubs.
+- A configured round deck contains exactly 54 uniquely identified cards and includes the 3 of Clubs and both jokers.
 - Player IDs are unique strings and remain stable during a round.
 - Illegal player actions return validation results and leave the supplied state untouched.
 - Invalid game construction is a programmer error and throws a descriptive exception.

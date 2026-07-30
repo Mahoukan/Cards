@@ -1,4 +1,10 @@
-const cardView = (card) => ({ id: card.id, rank: card.rank, suit: card.suit, value: card.value });
+const cardView = (card) => ({
+  id: card.id,
+  rank: card.rank,
+  suit: card.suit,
+  value: card.value,
+  ...(card.isJoker ? { color: card.color, isJoker: true } : {}),
+});
 
 export const createExchangeView = ({ room, session, playerId, serverTime }) => {
   const roomPlayers = new Map(room.players.map((player) => [player.id, player]));

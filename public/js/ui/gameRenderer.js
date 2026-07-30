@@ -1,5 +1,5 @@
 import { createCardElement } from "./cardRenderer.js";
-import { calculateHandLayout } from "./handLayout.js";
+import { calculateHandLayout, getCardStackIndex } from "./handLayout.js";
 import { toggleCardSelection } from "./selection.js";
 
 const formatCount = (count) => `${count} card${count === 1 ? "" : "s"}`;
@@ -55,10 +55,12 @@ export const createGameRenderer = ({ onPlay, onPass, onKick, onLeave }) => {
       }
       return item;
     }));
-    const cards = view.currentPlay?.cards ?? [];
+    const cards = view.currentPlay?.cards ?? (view.lastAction?.type === "joker_clear" ? view.lastAction.cards : []);
     byId("pile-cards").replaceChildren(...cards.map((card) => createCardElement(card)));
     const pilePlayer = view.players.find(({ id }) => id === view.currentPlay?.playerId);
-    byId("pile-summary").textContent = view.currentPlay
+    byId("pile-summary").textContent = view.lastAction?.type === "joker_clear"
+      ? "Joker clears the pile"
+      : view.currentPlay
       ? `${pilePlayer?.name ?? "Player"} played ${formatCount(view.currentPlay.count)} · ${view.currentPlay.rank}s`
       : view.openingPlayRequired ? "Opening play must include 3♣" : "The pile is empty";
     const current = view.players.find(({ id }) => id === view.currentPlayerId);
@@ -73,8 +75,12 @@ export const createGameRenderer = ({ onPlay, onPass, onKick, onLeave }) => {
       : view.you.forfeited ? "You forfeited"
       : view.currentPlayerId === view.you.id ? "Your turn" : `Waiting for ${current?.name ?? "another player"}`;
     byId("turn-panel").classList.toggle("is-your-turn", canAct());
-    byId("hand").replaceChildren(...view.you.hand.map((card) => {
-      const element = createCardElement(card, { selectable: true, selected: selectedIds.includes(card.id) });
+    byId("hand").replaceChildren(...view.you.hand.map((card, index) => {
+      const element = createCardElement(card, {
+        selectable: true,
+        selected: selectedIds.includes(card.id),
+        stackIndex: getCardStackIndex(index),
+      });
       element.disabled = !canAct();
       element.addEventListener("click", () => {
         const result = toggleCardSelection(selectedIds, card, view.you.hand);

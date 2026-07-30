@@ -11,21 +11,25 @@ import {
   sortHand,
 } from "../../src/game/index.js";
 
-test("createDeck creates the complete standard deck", () => {
+test("createDeck creates 52 standard cards and two stable jokers", () => {
   const deck = createDeck();
-  assert.equal(deck.length, 52);
-  assert.equal(new Set(deck.map((card) => card.id)).size, 52);
-  assert.deepEqual(new Set(deck.map((card) => card.rank)), new Set(RANKS));
-  assert.deepEqual(new Set(deck.map((card) => card.suit)), new Set(SUITS));
+  assert.equal(deck.length, 54);
+  assert.equal(new Set(deck.map((card) => card.id)).size, 54);
+  const standard = deck.filter((card) => !card.isJoker);
+  const jokers = deck.filter((card) => card.isJoker);
+  assert.equal(standard.length, 52);
+  assert.deepEqual(new Set(standard.map((card) => card.rank)), new Set(RANKS));
+  assert.deepEqual(new Set(standard.map((card) => card.suit)), new Set(SUITS));
+  assert.deepEqual(jokers.map((card) => card.id), ["joker-black", "joker-red"]);
+  assert.ok(jokers.every((card) => card.rank === "JOKER" && card.suit === null && card.value === 13));
   assert.ok(deck.some((card) => card.id === "3-clubs"));
-  assert.ok(deck.every((card) => !card.id.toLowerCase().includes("joker")));
 });
 
 test("dealCards deals every card with balanced hand sizes", () => {
   for (let playerCount = 2; playerCount <= 6; playerCount += 1) {
     const hands = dealCards(createDeck(), playerCount);
     const sizes = hands.map((hand) => hand.length);
-    assert.equal(hands.flat().length, 52);
+    assert.equal(hands.flat().length, 54);
     assert.ok(Math.max(...sizes) - Math.min(...sizes) <= 1);
   }
 });
@@ -59,6 +63,17 @@ test("sortHand orders by rank then clubs, diamonds, hearts, spades", () => {
     sortHand(hand).map((card) => card.id),
     ["3-clubs", "3-hearts", "A-clubs", "A-spades", "2-diamonds"],
   );
+});
+
+test("sortHand and highest-card selection order jokers above twos with red highest", () => {
+  const deckById = new Map(createDeck().map((card) => [card.id, card]));
+  const hand = ["joker-black", "2-spades", "joker-red", "A-spades"].map((id) => deckById.get(id));
+  assert.deepEqual(sortHand(hand).map(({ id }) => id), [
+    "A-spades", "2-spades", "joker-black", "joker-red",
+  ]);
+  assert.deepEqual(selectHighestCards(hand, 3).map(({ id }) => id), [
+    "joker-red", "joker-black", "2-spades",
+  ]);
 });
 
 test("findThreeOfClubsHolder returns the owning player", () => {

@@ -38,3 +38,25 @@ test("public play, player state, host, and serialisability are exposed", () => {
   assert.equal(view.players[0].isHost, true);
   assert.doesNotThrow(() => JSON.stringify(view));
 });
+
+test("jokers remain private in hands and are serialisable when publicly cleared", () => {
+  const jokerOwner = state.players.find((player) => player.hand.some(({ isJoker }) => isJoker));
+  const otherPlayerId = jokerOwner.id === "p1" ? "p2" : "p1";
+  const joker = jokerOwner.hand.find(({ isJoker }) => isJoker);
+  const privateView = createGameView({ room, session, playerId: otherPlayerId, serverTime: 100 });
+  assert.equal(JSON.stringify(privateView).includes(joker.id), false);
+
+  const publicState = {
+    ...state,
+    lastAction: { type: "joker_clear", playerId: jokerOwner.id, cards: [joker] },
+  };
+  const publicView = createGameView({
+    room,
+    session: { ...session, state: publicState },
+    playerId: otherPlayerId,
+    serverTime: 100,
+  });
+  assert.equal(publicView.lastAction.cards[0].id, joker.id);
+  assert.equal(publicView.lastAction.cards[0].isJoker, true);
+  assert.doesNotThrow(() => JSON.stringify(publicView));
+});

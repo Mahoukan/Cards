@@ -23,7 +23,7 @@ Required lower-role transfers happen immediately on the server:
 - Scum gives their two highest cards to President.
 - With four to six current players, Vice Scum gives their highest card to Vice President.
 
-Highest-card selection uses rank order first and suit order only as a deterministic tie-breaker. Every transfer is recorded internally, affected hands are sorted, and the prepared round is checked for exactly 52 unique cards.
+Highest-card selection uses rank order first and suit order only as a deterministic tie-breaker. Jokers rank above twos, with red above black only for stable selection, so automatic transfers may include either or both jokers. Every transfer is recorded internally, affected hands are sorted, and the prepared round is checked for exactly 54 unique cards.
 
 ## Personalised exchange views
 
@@ -39,7 +39,7 @@ Higher-role players submit `exchange:returnCards` with only `{ cardIds }`. The s
 
 Rejected returns include machine-readable errors such as `NOT_IN_EXCHANGE`, `NO_EXCHANGE_REQUIRED`, `EXCHANGE_ALREADY_COMPLETE`, `WRONG_RETURN_CARD_COUNT`, `DUPLICATE_CARD`, `CARD_NOT_OWNED`, and `INVALID_CARD_SELECTION`. Invalid actions do not move cards, mark exchanges complete, increase revision, or start the round.
 
-President may return any two owned cards. Vice President may return any one owned card. Mixed ranks are legal, and returned cards may include cards just received.
+President may return any two owned cards. Vice President may return any one owned card. Mixed ranks are legal, returned cards may include cards just received, and a joker may be returned. Every transition preserves all 54 unique cards.
 
 ## Completion
 

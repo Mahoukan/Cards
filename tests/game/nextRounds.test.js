@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createDeck } from "../../src/game/deck.js";
+import { createRound } from "../../src/game/gameEngine.js";
+import { assignRoles } from "../../src/game/roles.js";
+import { createExchangeSession, returnExchangeCards } from "../../src/game/exchangeCoordinator.js";
 import { ROLE_NAMES } from "../../src/game/constants.js";
 import { GameCoordinator } from "../../src/game/gameCoordinator.js";
 import { ROOM_STATUS } from "../../src/rooms/constants.js";
@@ -101,7 +104,7 @@ test("role recalculation filters removed historical players and keeps previous r
   assert.equal(exchange.requirements.length, 1);
 });
 
-test("automatic transfers move highest cards privately and preserve 52 unique cards", () => {
+test("automatic transfers move highest cards privately and preserve 54 unique cards", () => {
   const value = harness(4);
   const ids = value.room.players.map((player) => player.id);
   completeArtificialRound({ ...value, finishOrder: ids });
@@ -114,8 +117,8 @@ test("automatic transfers move highest cards privately and preserve 52 unique ca
   assert.deepEqual(presidentRequirement.givenCardIds, ["2-spades", "A-spades"]);
   assert.deepEqual(viceRequirement.givenCardIds, ["2-hearts"]);
   const allIds = exchange.roundState.players.flatMap((player) => player.hand.map((card) => card.id));
-  assert.equal(allIds.length, 52);
-  assert.equal(new Set(allIds).size, 52);
+  assert.equal(allIds.length, 54);
+  assert.equal(new Set(allIds).size, 54);
   assert.equal(value.coordinator.getView(value.code, "p1").roomStatus, "exchange");
   assert.equal(value.coordinator.getExchangeView(value.code, "p3").yourExchange.givenCards.length, 1);
   assert.equal(JSON.stringify(value.coordinator.getExchangeView(value.code, "p1")).includes("socketId"), false);
@@ -180,4 +183,54 @@ test("membership changes during exchange cancel prepared hands and require readi
   assert.equal(value.room.status, "round_complete");
   assert.equal(value.coordinator.getExchangeSession(value.code), null);
   assert.deepEqual(value.room.players.map((player) => player.nextRoundReady), [false, false]);
+});
+
+test("joker-inclusive automatic and return exchanges preserve all 54 unique cards", () => {
+  const deck = createDeck();
+  [deck[51], deck[52]] = [deck[52], deck[51]];
+  const participants = [{ id: "p1", name: "President" }, { id: "p2", name: "Scum" }];
+  const roundState = createRound({
+    players: participants,
+    deck,
+    roundNumber: 2,
+    startingPlayerId: "p2",
+    openingPlayRequired: false,
+  });
+  const roles = assignRoles(["p1", "p2"]);
+  const exchange = createExchangeSession({
+    roundState,
+    roles,
+    filteredFinishOrder: ["p1", "p2"],
+    participants,
+    nextStartingPlayerId: "p2",
+  });
+  assert.deepEqual(exchange.requirements[0].givenCardIds, ["joker-red", "joker-black"]);
+  const presidentHand = exchange.roundState.players[0].hand;
+  const returnIds = ["joker-red", presidentHand.find(({ id }) => id !== "joker-black" && id !== "joker-red").id];
+  const returned = returnExchangeCards(exchange, "p1", returnIds);
+  assert.equal(returned.ok, true);
+  assert.ok(returned.session.roundState.players[1].hand.some(({ id }) => id === "joker-red"));
+  const ids = returned.session.roundState.players.flatMap(({ hand }) => hand.map(({ id }) => id));
+  assert.equal(ids.length, 54);
+  assert.equal(new Set(ids).size, 54);
+});
+
+test("Vice Scum automatically gives a joker when it is their highest card", () => {
+  const deck = createDeck();
+  [deck[50], deck[53]] = [deck[53], deck[50]];
+  const participants = Array.from({ length: 4 }, (_, index) => ({
+    id: `p${index + 1}`,
+    name: `Player ${index + 1}`,
+  }));
+  const roundState = createRound({ players: participants, deck });
+  const finishOrder = participants.map(({ id }) => id);
+  const exchange = createExchangeSession({
+    roundState,
+    roles: assignRoles(finishOrder),
+    filteredFinishOrder: finishOrder,
+    participants,
+    nextStartingPlayerId: "p4",
+  });
+  const viceExchange = exchange.requirements.find(({ lowerPlayerId }) => lowerPlayerId === "p3");
+  assert.deepEqual(viceExchange.givenCardIds, ["joker-red"]);
 });

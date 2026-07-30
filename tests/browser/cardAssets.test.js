@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getCardAssetUrl, isStandardCardId } from "../../public/js/ui/cardAssets.js";
+import { getCardAssetUrl, isCardAssetId, isStandardCardId } from "../../public/js/ui/cardAssets.js";
+import { cardLabel } from "../../public/js/ui/cardRenderer.js";
 
 const ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 const suits = ["clubs", "diamonds", "hearts", "spades"];
@@ -18,9 +19,18 @@ test("asset mapper handles numeric, face, ace, every rank, and every suit", () =
   }
 });
 
-test("asset mapper safely rejects jokers, paths, URLs, and malformed cards", () => {
+test("asset mapper accepts exactly the two joker IDs", () => {
+  assert.equal(isCardAssetId("joker-black"), true);
+  assert.equal(isCardAssetId("joker-red"), true);
+  assert.equal(getCardAssetUrl({ id: "joker-black" }), "/assets/cards/joker-black.svg");
+  assert.equal(getCardAssetUrl({ id: "joker-red" }), "/assets/cards/joker-red.svg");
+  assert.equal(cardLabel({ id: "joker-black", rank: "JOKER", suit: null, color: "black", isJoker: true }), "Black Joker");
+  assert.equal(cardLabel({ id: "joker-red", rank: "JOKER", suit: null, color: "red", isJoker: true }), "Red Joker");
+});
+
+test("asset mapper safely rejects unknown jokers, paths, URLs, and malformed cards", () => {
   for (const id of [
-    "joker-black", "joker-red", "../A-spades", "cards/A-spades",
+    "joker-blue", "joker", "../A-spades", "cards/A-spades",
     "cards\\A-spades", "https://example.com/A-spades", "A-spades.svg", "",
   ]) assert.equal(getCardAssetUrl({ id }), null);
   assert.equal(getCardAssetUrl({}), null);
@@ -28,4 +38,3 @@ test("asset mapper safely rejects jokers, paths, URLs, and malformed cards", () 
   assert.equal(getCardAssetUrl([]), null);
   assert.equal(getCardAssetUrl("A-spades"), null);
 });
-

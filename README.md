@@ -1,6 +1,6 @@
 # President
 
-President is a complete, mobile-first, in-memory multiplayer MVP for private games with 2–6 friends. It includes private rooms, reconnectable sessions, host migration, server-authoritative rounds and timers, forfeits, role exchanges, and consecutive rounds.
+President is a complete, mobile-first, in-memory multiplayer MVP for private games with 2–6 friends. It includes a 54-card deck with two jokers, private rooms, reconnectable sessions, host migration, server-authoritative rounds and timers, forfeits, role exchanges, and consecutive rounds.
 
 The production MVP is ready for external phone testing. It remains deliberately focused on one game and has no accounts, public matchmaking, chat, bots, analytics, or stored match history. Rooms and active games are not persistent: a server restart or Railway redeployment ends them.
 
@@ -50,4 +50,4 @@ Invalid numeric values fail startup with a clear server-side error. Environment 
 
 SVG playing-card artwork is integrated through the shared card renderer. Assets live in `public/assets/cards/` and standard cards use the engine-ID convention `<rank>-<suit>.svg`, such as `10-diamonds.svg` or `Q-clubs.svg`. Ranks are `A`, `2`–`10`, `J`, `Q`, and `K`; suits are `clubs`, `diamonds`, `hearts`, and `spades`.
 
-The accessible CSS/text face remains in every rendered card and appears automatically if an image is missing, blocked, or fails to load. `joker-black.svg` and `joker-red.svg` are included in the asset folder but are not used by President gameplay.
+The accessible CSS/text face remains in every rendered card and appears automatically if an image is missing, blocked, or fails to load. `joker-black.svg` and `joker-red.svg` are active game cards: each is played alone, beats any active quantity, and immediately clears the pile. Selectable hands reserve lift headroom so selected cards remain visible while horizontal scrolling continues to work.

@@ -1,4 +1,10 @@
-const serialisableCard = (card) => ({ id: card.id, rank: card.rank, suit: card.suit, value: card.value });
+const serialisableCard = (card) => ({
+  id: card.id,
+  rank: card.rank,
+  suit: card.suit,
+  value: card.value,
+  ...(card.isJoker ? { color: card.color, isJoker: true } : {}),
+});
 
 export const createGameView = ({ room, session, playerId, serverTime }) => {
   const ownState = session.state.players.find(({ id }) => id === playerId);
@@ -46,6 +52,11 @@ export const createGameView = ({ room, session, playerId, serverTime }) => {
       count: session.state.currentPlay.count,
       playerId: session.state.currentPlay.playerId,
       cards: session.state.currentPlay.cards.map(serialisableCard),
+    } : null,
+    lastAction: session.state.lastAction?.type === "joker_clear" ? {
+      type: "joker_clear",
+      playerId: session.state.lastAction.playerId,
+      cards: session.state.lastAction.cards.map(serialisableCard),
     } : null,
     openingPlayRequired: session.state.openingPlayRequired,
     turnDeadline: session.turnDeadline,

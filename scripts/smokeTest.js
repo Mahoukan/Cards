@@ -28,6 +28,9 @@ try {
   const cardAsset = await fetch(`${origin}/assets/cards/3-clubs.svg`);
   assert.equal(cardAsset.status, 200);
   assert.match(cardAsset.headers.get("content-type") ?? "", /image\/svg\+xml/);
+  const jokerAsset = await fetch(`${origin}/assets/cards/joker-black.svg`);
+  assert.equal(jokerAsset.status, 200);
+  assert.match(jokerAsset.headers.get("content-type") ?? "", /image\/svg\+xml/);
 
   const first = createClient(origin, { transports: ["websocket"], forceNew: true });
   const second = createClient(origin, { transports: ["websocket"], forceNew: true });
@@ -48,6 +51,7 @@ try {
   const [firstView, secondView] = await Promise.all([firstStarted, secondStarted]);
   assert.ok(firstView.you.hand.length);
   assert.ok(secondView.you.hand.length);
+  assert.equal(firstView.you.hand.length + secondView.you.hand.length, 54);
   assert.equal(JSON.stringify(firstView).includes(secondView.you.hand[0].id), false);
   assert.equal(JSON.stringify(secondView).includes(firstView.you.hand[0].id), false);
 

@@ -135,24 +135,11 @@ input { width: 100%; min-height: 50px; padding: 10px 13px; border: 2px solid #aa
 .hand-area { min-height: 0; padding: 8px 9px 2px; border-radius: 13px 13px 0 0; background: rgb(0 29 18 / 35%); }
 .hand-area .section-heading { padding: 0 3px 5px; }
 .hand-area h3, .hand-area .section-heading span { color: white; }
-.hand { --card-step: 46px; --hand-width: 100%; --card-width: 72px; height: calc(var(--card-height) + 14px); overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; touch-action: pan-x; scrollbar-width: thin; }
+.hand { --card-selection-lift: .75rem; --card-step: 46px; --hand-width: 100%; --card-width: 72px; height: calc(var(--card-height) + var(--card-selection-lift) + .4rem); overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; touch-action: pan-x; scrollbar-width: thin; }
 .hand::after { display: block; width: var(--hand-width); height: 1px; content: ""; }
-.hand .playing-card { position: absolute; left: calc(var(--index, 0) * var(--card-step)); }
+.hand .playing-card { position: absolute; z-index: calc(var(--card-stack-index, 0) + 1); top: calc(var(--card-selection-lift) + .2rem); left: calc(var(--card-stack-index, 0) * var(--card-step)); }
 .hand .playing-card { touch-action: pan-x; }
 .hand { position: relative; }
-.hand .playing-card:nth-child(1) { --index: 0; } .hand .playing-card:nth-child(2) { --index: 1; }
-.hand .playing-card:nth-child(3) { --index: 2; } .hand .playing-card:nth-child(4) { --index: 3; }
-.hand .playing-card:nth-child(5) { --index: 4; } .hand .playing-card:nth-child(6) { --index: 5; }
-.hand .playing-card:nth-child(7) { --index: 6; } .hand .playing-card:nth-child(8) { --index: 7; }
-.hand .playing-card:nth-child(9) { --index: 8; } .hand .playing-card:nth-child(10) { --index: 9; }
-.hand .playing-card:nth-child(11) { --index: 10; } .hand .playing-card:nth-child(12) { --index: 11; }
-.hand .playing-card:nth-child(13) { --index: 12; } .hand .playing-card:nth-child(14) { --index: 13; }
-.hand .playing-card:nth-child(15) { --index: 14; } .hand .playing-card:nth-child(16) { --index: 15; }
-.hand .playing-card:nth-child(17) { --index: 16; } .hand .playing-card:nth-child(18) { --index: 17; }
-.hand .playing-card:nth-child(19) { --index: 18; } .hand .playing-card:nth-child(20) { --index: 19; }
-.hand .playing-card:nth-child(21) { --index: 20; } .hand .playing-card:nth-child(22) { --index: 21; }
-.hand .playing-card:nth-child(23) { --index: 22; } .hand .playing-card:nth-child(24) { --index: 23; }
-.hand .playing-card:nth-child(25) { --index: 24; } .hand .playing-card:nth-child(26) { --index: 25; }
 .playing-card {
   position: relative;
   width: var(--card-width); height: var(--card-height); padding: 0; overflow: hidden; border: 2px solid #d7d3c8; border-radius: 9px;
@@ -171,7 +158,9 @@ button.playing-card { cursor: pointer; }
 .card-rank { font-size: 1.15rem; font-weight: 900; line-height: 1; }
 .card-suit { margin-top: 3px; font-size: 1rem; }
 .card-name { position: absolute; right: 4px; bottom: 6px; font-size: .48rem; font-weight: 700; writing-mode: vertical-rl; text-transform: uppercase; }
-.playing-card.is-selected { transform: translateY(-12px); border: 3px solid var(--gold); box-shadow: 0 0 0 2px #173e2b, 0 5px 8px rgb(0 0 0 / 28%); }
+.playing-card.is-selected, .playing-card[aria-pressed="true"] { transform: translateY(calc(-1 * var(--card-selection-lift, .75rem))); border: 3px solid var(--gold); box-shadow: 0 0 0 2px #173e2b, 0 5px 8px rgb(0 0 0 / 28%); }
+.playing-card:focus-visible { outline: none; }
+.playing-card:focus-visible::after { position: absolute; inset: 2px; z-index: 3; border: 3px solid #fff6bf; border-radius: 5px; content: ""; pointer-events: none; }
 .playing-card:disabled { opacity: .72; }
 .game-controls { display: grid; grid-template-columns: 1fr 1.45fr; gap: 9px; padding-bottom: env(safe-area-inset-bottom); }
 .game-controls .button { min-height: 49px; }
@@ -195,7 +184,7 @@ button.playing-card { cursor: pointer; }
   .opponent { min-height: 49px; padding-block: 5px; }
   .pile-cards { min-height: 64px; }
   .pile-cards .playing-card { width: 47px; height: 64px; }
-  .hand { height: calc(var(--card-height) + 14px); }
+  .hand { height: calc(var(--card-height) + var(--card-selection-lift) + .4rem); }
 }
 @media (max-width: 340px) {
   .screen { padding-left: max(9px, env(safe-area-inset-left)); padding-right: max(9px, env(safe-area-inset-right)); }

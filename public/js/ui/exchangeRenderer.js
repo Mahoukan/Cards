@@ -1,5 +1,5 @@
 import { createCardElement } from "./cardRenderer.js";
-import { calculateHandLayout } from "./handLayout.js";
+import { calculateHandLayout, getCardStackIndex } from "./handLayout.js";
 import { toggleCardSelection } from "./selection.js";
 
 const formatCount = (count) => `${count} card${count === 1 ? "" : "s"}`;
@@ -48,8 +48,12 @@ export const createExchangeRenderer = ({ onReturnCards, onKick, onLeave }) => {
       }
       return item;
     }));
-    byId("exchange-hand").replaceChildren(...view.you.hand.map((card) => {
-      const element = createCardElement(card, { selectable: canReturn(), selected: selectedIds.includes(card.id) });
+    byId("exchange-hand").replaceChildren(...view.you.hand.map((card, index) => {
+      const element = createCardElement(card, {
+        selectable: canReturn(),
+        selected: selectedIds.includes(card.id),
+        stackIndex: getCardStackIndex(index),
+      });
       element.disabled = !canReturn();
       element.addEventListener("click", () => {
         const result = toggleCardSelection(selectedIds, card, view.you.hand, { mode: "exchange", max: required });

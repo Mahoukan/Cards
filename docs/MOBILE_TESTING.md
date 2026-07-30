@@ -10,6 +10,7 @@ Record device, OS/browser version, deployment version, network, result, and scre
 - [ ] Browser text zoom and reduced motion
 - [ ] Six-player lobby, five opponents, and six-player results
 - [ ] Large starting hand scrolls to both ends; lifted selections remain visible
+- [ ] At 320px, gameplay and exchange selections reserve lift headroom and are not clipped at the top
 - [ ] Large President exchange keeps quantity and Return reachable
 - [ ] On-screen keyboard does not permanently cover forms
 - [ ] No unintended page-width scroll; dialogs remain inside the viewport
@@ -33,6 +34,8 @@ Record device, OS/browser version, deployment version, network, result, and scre
 - [ ] A deliberately missing image falls back to the text face without a broken-image icon
 - [ ] Large hands remain horizontally scrollable to both ends
 - [ ] Selected cards remain obvious through their lifted position and selected state
+- [ ] Black and red joker images render with accessible text fallback
+- [ ] Selecting a joker replaces normal gameplay selection; exchange selection still permits mixed cards
 - [ ] Pair, triple, and four-card piles remain recognisable and compact
 - [ ] The prepared exchange hand and visible received/given cards remain usable
 - [ ] Slow image loading does not block selection, gameplay, or the text fallback
@@ -55,3 +58,5 @@ Record device, OS/browser version, deployment version, network, result, and scre
 - [ ] Leaving during exchange
 - [ ] Forfeit and six-player room behavior
 - [ ] Multiple rounds, exchange, and later-round Scum start
+- [ ] Joker clears single/pair piles immediately, starts one fresh timer, and returns the lead correctly
+- [ ] Final-card joker finishes only its player; Round 1 still requires 3♣

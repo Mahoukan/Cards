@@ -1,5 +1,5 @@
 import { createCardElement } from "../ui/cardRenderer.js";
-import { calculateHandLayout } from "../ui/handLayout.js";
+import { calculateHandLayout, getCardStackIndex } from "../ui/handLayout.js";
 import { toggleCardSelection } from "../ui/selection.js";
 import { results } from "./demoState.js";
 
@@ -75,8 +75,12 @@ export const createDemoController = ({ state, navigate }) => {
     const canAct = state.turnId === "you" && !state.youPassed && !state.youFinished;
     byId("turn-message").textContent = state.youFinished ? "You finished!" : state.youPassed ? "You passed" : canAct ? "Your turn" : `Waiting for ${state.players.find(({ id }) => id === state.turnId)?.name ?? "another player"}`;
     byId("turn-panel").classList.toggle("is-your-turn", canAct);
-    byId("hand").replaceChildren(...state.hand.map((card) => {
-      const element = createCardElement(card, { selectable: true, selected: state.selectedIds.includes(card.id) });
+    byId("hand").replaceChildren(...state.hand.map((card, index) => {
+      const element = createCardElement(card, {
+        selectable: true,
+        selected: state.selectedIds.includes(card.id),
+        stackIndex: getCardStackIndex(index),
+      });
       element.disabled = !canAct;
       element.addEventListener("click", () => {
         const result = toggleCardSelection(state.selectedIds, card, state.hand);

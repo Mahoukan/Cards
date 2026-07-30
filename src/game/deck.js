@@ -1,6 +1,8 @@
 import {
   MAX_PLAYERS,
   MIN_PLAYERS,
+  JOKER_RANK,
+  JOKER_VALUE,
   RANKS,
   SUITS,
   THREE_OF_CLUBS_ID,
@@ -10,7 +12,7 @@ const rankValues = new Map(RANKS.map((rank, value) => [rank, value]));
 const suitValues = new Map(SUITS.map((suit, value) => [suit, value]));
 
 export function createDeck() {
-  return RANKS.flatMap((rank, value) =>
+  const standardCards = RANKS.flatMap((rank, value) =>
     SUITS.map((suit) => ({
       id: `${rank}-${suit}`,
       rank,
@@ -18,6 +20,11 @@ export function createDeck() {
       value,
     })),
   );
+  return [
+    ...standardCards,
+    { id: "joker-black", rank: JOKER_RANK, suit: null, color: "black", value: JOKER_VALUE, isJoker: true },
+    { id: "joker-red", rank: JOKER_RANK, suit: null, color: "red", value: JOKER_VALUE, isJoker: true },
+  ];
 }
 
 export function shuffleDeck(deck, random = Math.random) {
@@ -63,7 +70,11 @@ export function sortHand(hand) {
     .map((card) => ({ ...card }))
     .sort((left, right) => {
       const rankDifference = getRankValue(left.rank) - getRankValue(right.rank);
-      return rankDifference || getSuitValue(left.suit) - getSuitValue(right.suit);
+      if (rankDifference) return rankDifference;
+      if (left.isJoker || right.isJoker) {
+        return (left.color === "red" ? 1 : 0) - (right.color === "red" ? 1 : 0);
+      }
+      return getSuitValue(left.suit) - getSuitValue(right.suit);
     });
 }
 
@@ -90,6 +101,7 @@ export function selectHighestCards(hand, count) {
 }
 
 export function getRankValue(rank) {
+  if (rank === JOKER_RANK) return JOKER_VALUE;
   const value = rankValues.get(rank);
   if (value === undefined) {
     throw new RangeError(`Unknown card rank: ${rank}`);

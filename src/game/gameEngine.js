@@ -1,4 +1,4 @@
-import { MAX_PLAYERS, MIN_PLAYERS, VALIDATION_CODES } from "./constants.js";
+import { DECK_SIZE, MAX_PLAYERS, MIN_PLAYERS, VALIDATION_CODES } from "./constants.js";
 import {
   createDeck,
   dealCards,
@@ -36,10 +36,10 @@ function validatePlayers(players) {
 }
 
 function validateDeck(deck) {
-  if (!Array.isArray(deck) || deck.length !== 52) {
-    throw new Error("A round deck must contain exactly 52 cards.");
+  if (!Array.isArray(deck) || deck.length !== DECK_SIZE) {
+    throw new Error(`A round deck must contain exactly ${DECK_SIZE} cards.`);
   }
-  if (new Set(deck.map((card) => card.id)).size !== 52) {
+  if (new Set(deck.map((card) => card.id)).size !== DECK_SIZE) {
     throw new Error("Every card in the round deck must have a unique ID.");
   }
 }
@@ -139,6 +139,7 @@ export function createRound({
     forfeitOrder: [],
     removedCards: [],
     openingPlayRequired,
+    lastAction: null,
   };
 }
 
@@ -202,17 +203,47 @@ export function playCards(state, playerId, cardIds) {
     lastSuccessfulPlayerId: playerId,
     finishOrder,
     openingPlayRequired: false,
+    lastAction: null,
   };
   nextState = completeIfOneRemains(nextState);
   if (nextState.phase === "complete") {
-    return { ok: true, state: nextState };
+    if (!playClearsPile(validation.play)) {
+      return { ok: true, state: nextState };
+    }
+    const clearedState = clearedPileState(nextState, null);
+    return {
+      ok: true,
+      state: validation.play.isJoker
+        ? {
+            ...clearedState,
+            lastAction: {
+              type: "joker_clear",
+              playerId,
+              cards: selectedCards.map((card) => ({ ...card })),
+            },
+          }
+        : clearedState,
+    };
   }
 
   if (playClearsPile(validation.play)) {
     const leaderId = updatedPlayer.hand.length > 0
       ? playerId
       : nextEligiblePlayerId(nextState, playerId);
-    return { ok: true, state: clearedPileState(nextState, leaderId) };
+    const clearedState = clearedPileState(nextState, leaderId);
+    return {
+      ok: true,
+      state: validation.play.isJoker
+        ? {
+            ...clearedState,
+            lastAction: {
+              type: "joker_clear",
+              playerId,
+              cards: selectedCards.map((card) => ({ ...card })),
+            },
+          }
+        : clearedState,
+    };
   }
 
   const passedIds = new Set([...nextState.passedPlayerIds, playerId]);
@@ -249,7 +280,7 @@ export function passTurn(state, playerId) {
   }
 
   const passedPlayerIds = [...new Set([...state.passedPlayerIds, playerId])];
-  const stateAfterPass = { ...state, passedPlayerIds };
+  const stateAfterPass = { ...state, passedPlayerIds, lastAction: null };
   const nextPlayerId = nextEligiblePlayerId(
     stateAfterPass,
     playerId,

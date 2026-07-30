@@ -63,7 +63,7 @@ test("createRound starts the 3 of Clubs holder without mutating inputs", () => {
   const round = createRound({ players, deck });
   assert.equal(round.currentPlayerId, "p1");
   assert.equal(round.openingPlayRequired, true);
-  assert.equal(round.players[0].hand.length, 26);
+  assert.equal(round.players[0].hand.length, 27);
   assert.deepEqual(players, originalPlayers);
   assert.deepEqual(deck, originalDeck);
 });
@@ -236,5 +236,75 @@ test("an invalid play does not partially mutate state", () => {
   const result = playCards(state, "p1", ["4-clubs"]);
   assert.equal(result.error.code, VALIDATION_CODES.OPENING_MUST_INCLUDE_3_OF_CLUBS);
   assert.strictEqual(result.state, state);
+  assert.deepEqual(state, snapshot);
+});
+
+test("joker clears any active quantity, resets passes, and lets its player lead again", () => {
+  for (const activeIds of [
+    ["A-clubs"],
+    ["K-clubs", "K-diamonds"],
+    ["Q-clubs", "Q-diamonds", "Q-hearts"],
+    ["A-clubs", "A-diamonds", "A-hearts", "A-spades"],
+  ]) {
+    const playedCards = activeIds.map(card);
+    const currentPlay = {
+      playerId: "p3",
+      cards: playedCards,
+      rank: playedCards[0].rank,
+      value: playedCards[0].value,
+      count: playedCards.length,
+      isJoker: false,
+    };
+    const state = stateWith({
+      players: [
+        player("p1", ["joker-black", "4-clubs"]),
+        player("p2", ["5-clubs"]),
+        player("p3", ["6-clubs"]),
+      ],
+      currentPlay,
+      passedPlayerIds: ["p2"],
+      lastSuccessfulPlayerId: "p3",
+    });
+    const result = playCards(state, "p1", ["joker-black"]);
+    assert.equal(result.ok, true);
+    assert.equal(result.state.currentPlay, null);
+    assert.deepEqual(result.state.passedPlayerIds, []);
+    assert.equal(result.state.currentPlayerId, "p1");
+    assert.equal(result.state.discardPile.at(-1).id, "joker-black");
+    assert.equal(result.state.lastAction.type, "joker_clear");
+  }
+});
+
+test("a final-card joker records a normal finish and passes the lead onward", () => {
+  const state = stateWith({
+    players: [
+      player("p1", ["joker-red"]),
+      player("p2", ["4-clubs", "5-clubs"]),
+      player("p3", ["6-clubs", "7-clubs"]),
+    ],
+  });
+  const result = playCards(state, "p1", ["joker-red"]);
+  assert.equal(result.ok, true);
+  assert.equal(result.state.phase, "playing");
+  assert.deepEqual(result.state.finishOrder, ["p1"]);
+  assert.equal(result.state.players[0].finishPosition, 1);
+  assert.equal(result.state.currentPlayerId, "p2");
+  assert.ok(result.state.players.slice(1).every(({ finishPosition }) => finishPosition === null));
+});
+
+test("later rounds may lead a joker while an invalid combined joker action is immutable", () => {
+  const state = stateWith({
+    players: [
+      player("p1", ["joker-black", "4-clubs"]),
+      player("p2", ["5-clubs"]),
+      player("p3", ["6-clubs"]),
+    ],
+    openingPlayRequired: false,
+  });
+  assert.equal(playCards(state, "p1", ["joker-black"]).ok, true);
+  const snapshot = structuredClone(state);
+  const invalid = playCards(state, "p1", ["joker-black", "4-clubs"]);
+  assert.equal(invalid.error.code, VALIDATION_CODES.JOKER_MUST_BE_PLAYED_ALONE);
+  assert.strictEqual(invalid.state, state);
   assert.deepEqual(state, snapshot);
 });

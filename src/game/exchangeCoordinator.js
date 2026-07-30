@@ -1,4 +1,5 @@
 import { sortHand } from "./deck.js";
+import { DECK_SIZE } from "./constants.js";
 import { getExchangeRequirements, selectHighestCards } from "./roles.js";
 
 export const EXCHANGE_ERRORS = Object.freeze({
@@ -33,8 +34,8 @@ const addCards = (hand, cards) => sortHand([...hand.map(cloneCard), ...cards.map
 export function assertUniqueRoundCards(state) {
   const cards = state.players.flatMap((player) => player.hand);
   const ids = cards.map((card) => card.id);
-  if (cards.length !== 52 || new Set(ids).size !== 52) {
-    throw new Error("Prepared round must contain exactly 52 unique cards.");
+  if (cards.length !== DECK_SIZE || new Set(ids).size !== DECK_SIZE) {
+    throw new Error(`Prepared round must contain exactly ${DECK_SIZE} unique cards.`);
   }
   return true;
 }

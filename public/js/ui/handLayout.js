@@ -28,3 +28,6 @@ export const calculateHandLayout = ({
     scroll,
   };
 };
+
+export const getCardStackIndex = (index) =>
+  Math.max(0, Math.floor(Number(index) || 0));

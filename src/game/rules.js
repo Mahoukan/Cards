@@ -9,6 +9,8 @@ const messages = Object.freeze({
   [VALIDATION_CODES.WRONG_CARD_COUNT]: "The play must contain the same number of cards as the active play.",
   [VALIDATION_CODES.RANK_NOT_HIGHER]: "The play must have a higher rank than the active play.",
   [VALIDATION_CODES.OPENING_MUST_INCLUDE_3_OF_CLUBS]: "The opening play must include the 3 of Clubs.",
+  [VALIDATION_CODES.JOKER_MUST_BE_PLAYED_ALONE]: "A joker must be played alone.",
+  [VALIDATION_CODES.JOKER_CANNOT_BE_BEATEN]: "No card can beat a joker.",
 });
 
 const invalid = (code) => ({
@@ -44,6 +46,7 @@ export function describePlay(cards) {
     rank: cards[0].rank,
     value: getRankValue(cards[0].rank),
     count: cards.length,
+    isJoker: cards[0].isJoker === true,
   };
 }
 
@@ -66,6 +69,10 @@ export function validatePlay({
   if (!playerOwnsCards(hand, selectedCards)) {
     return invalid(VALIDATION_CODES.CARD_NOT_OWNED);
   }
+  const containsJoker = selectedCards.some((card) => card.isJoker === true);
+  if (containsJoker && (selectedCards.length !== 1 || !selectedCards[0].isJoker)) {
+    return invalid(VALIDATION_CODES.JOKER_MUST_BE_PLAYED_ALONE);
+  }
   if (!allCardsHaveSameRank(selectedCards)) {
     return invalid(VALIDATION_CODES.MIXED_RANKS);
   }
@@ -74,6 +81,12 @@ export function validatePlay({
   }
 
   const play = describePlay(selectedCards);
+  if (currentPlay?.isJoker) {
+    return invalid(VALIDATION_CODES.JOKER_CANNOT_BE_BEATEN);
+  }
+  if (play.isJoker) {
+    return { ok: true, play };
+  }
   if (currentPlay && play.count !== currentPlay.count) {
     return invalid(VALIDATION_CODES.WRONG_CARD_COUNT);
   }
@@ -84,5 +97,5 @@ export function validatePlay({
 }
 
 export function playClearsPile(play) {
-  return play.rank === "2";
+  return play.rank === "2" || play.isJoker === true;
 }

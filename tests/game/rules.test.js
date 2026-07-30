@@ -115,3 +115,45 @@ test("four of a kind does not automatically clear", () => {
   const play = describePlay(getCards("9-clubs", "9-diamonds", "9-hearts", "9-spades"));
   assert.equal(playClearsPile(play), false);
 });
+
+test("a standalone joker beats any normal active quantity and clears immediately", () => {
+  const joker = getCards("joker-black");
+  for (const ids of [
+    ["A-clubs"],
+    ["K-clubs", "K-diamonds"],
+    ["Q-clubs", "Q-diamonds", "Q-hearts"],
+    ["A-clubs", "A-diamonds", "A-hearts", "A-spades"],
+  ]) {
+    const result = validate(joker, { currentPlay: describePlay(getCards(...ids)) });
+    assert.equal(result.ok, true);
+    assert.equal(result.play.count, 1);
+    assert.equal(result.play.isJoker, true);
+    assert.equal(playClearsPile(result.play), true);
+  }
+  assert.equal(validate(joker).ok, true);
+});
+
+test("jokers cannot be combined with any card", () => {
+  assert.equal(
+    validate(getCards("joker-black", "A-spades")).error.code,
+    VALIDATION_CODES.JOKER_MUST_BE_PLAYED_ALONE,
+  );
+  assert.equal(
+    validate(getCards("joker-black", "joker-red")).error.code,
+    VALIDATION_CODES.JOKER_MUST_BE_PLAYED_ALONE,
+  );
+});
+
+test("a normal play cannot beat an internally active joker", () => {
+  assert.equal(
+    validate(getCards("2-spades"), { currentPlay: describePlay(getCards("joker-red")) }).error.code,
+    VALIDATION_CODES.JOKER_CANNOT_BE_BEATEN,
+  );
+});
+
+test("a joker cannot replace the required opening 3 of Clubs", () => {
+  assert.equal(
+    validate(getCards("joker-red"), { openingPlayRequired: true }).error.code,
+    VALIDATION_CODES.OPENING_MUST_INCLUDE_3_OF_CLUBS,
+  );
+});
