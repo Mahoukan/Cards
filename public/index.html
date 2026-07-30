@@ -3,21 +3,38 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="description" content="President private card-table interface prototype.">
-    <title>President</title>
+    <meta name="description" content="Private multiplayer card games and rules.">
+    <title>Card Table</title>
     <link rel="stylesheet" href="/css/style.css">
   </head>
   <body>
     <main id="app">
       <section class="screen welcome-screen" data-screen="home" aria-labelledby="home-title">
-        <div class="panel hero-panel">
+        <div class="panel hero-panel game-picker-panel">
           <p class="eyebrow">Private card table</p>
-          <h1 id="home-title">President</h1>
-          <p class="lead">A quick, competitive card game for friends and family.</p>
-          <div class="stack">
-            <button class="button button-primary" type="button" data-go="create">Create Room</button>
-            <button class="button button-secondary" type="button" data-go="join">Join Room</button>
-            <button class="button button-quiet" type="button" data-instructions="president">How to Play</button>
+          <h1 id="home-title">Card Table</h1>
+          <p class="lead">Choose a game for friends and family.</p>
+          <div class="game-picker" aria-label="Games">
+            <article class="game-choice" data-game-card="president">
+              <div class="game-choice-heading"><h2 data-game-name></h2><span class="game-status is-available" data-game-status></span></div>
+              <p data-game-description></p>
+              <p class="game-player-count" data-game-players></p>
+              <div class="stack">
+                <button class="button button-primary" type="button" data-go="create">Create President Room</button>
+                <button class="button button-secondary" type="button" data-go="join">Join President Room</button>
+                <button class="button button-quiet" type="button" data-instructions="president">How to Play</button>
+              </div>
+            </article>
+            <article class="game-choice" data-game-card="crazy-eights">
+              <div class="game-choice-heading"><h2 data-game-name></h2><span class="game-status is-development" data-game-status></span></div>
+              <p data-game-description></p>
+              <p class="game-player-count" data-game-players></p>
+              <div class="stack">
+                <button class="button button-secondary" type="button" disabled aria-describedby="crazy-eights-status">Multiplayer coming soon</button>
+                <button class="button button-quiet" type="button" data-instructions="crazy-eights">How to Play</button>
+              </div>
+              <p id="crazy-eights-status" class="visually-hidden">Crazy Eights multiplayer rooms are in development.</p>
+            </article>
           </div>
           <p class="connection-status" data-connection data-state="disconnected" role="status" aria-live="polite">Disconnected</p>
           <p id="home-message" class="home-message" aria-live="polite"></p>
@@ -175,10 +192,10 @@
     </main>
     <dialog id="instructions-dialog" class="instructions-dialog" aria-labelledby="instructions-title" aria-describedby="instructions-warning">
       <div class="instructions-header">
-        <div><p class="eyebrow">President</p><h2 id="instructions-title">How to Play</h2></div>
+        <div><p class="eyebrow" id="instructions-game-name">President</p><h2 id="instructions-title">How to Play</h2></div>
         <button class="button button-compact button-secondary" id="close-instructions" type="button">Close</button>
       </div>
-      <p id="instructions-warning" class="callout"><strong>The game keeps moving.</strong> The turn timer and live updates continue while these instructions are open.</p>
+      <p id="instructions-warning" class="callout"><strong>Live games keep moving.</strong> If you are in a room, its turn timer and updates continue while these instructions are open.</p>
       <div id="instructions-content" class="instructions-content"></div>
     </dialog>
     <script src="/socket.io/socket.io.js"></script>

@@ -1,4 +1,6 @@
-# President
+# Card Table
+
+President is available and fully playable in private multiplayer rooms. Crazy Eights is in development: its 52-card, joker-free rules engine and How to Play instructions exist, but it is not yet connected to live rooms or Socket.IO.
 
 President is a complete, mobile-first, in-memory multiplayer MVP for private games with 2–6 friends. It includes a 54-card deck with two jokers, private rooms, reconnectable sessions, host migration, server-authoritative rounds and timers, forfeits, role exchanges, and consecutive rounds.
 
@@ -46,6 +48,7 @@ Invalid numeric values fail startup with a clear server-side error. Environment 
 - [Gameplay system](docs/GAMEPLAY_SYSTEM.md)
 - [Exchange system](docs/EXCHANGE_SYSTEM.md)
 - [President rules](docs/PRESIDENT_RULES.md)
+- [Crazy Eights rules](docs/CRAZY_EIGHTS_RULES.md)
 - [Card assets](docs/CARD_ASSETS.md)
 - [Railway deployment](docs/DEPLOYMENT.md)
 - [Real-device mobile checklist](docs/MOBILE_TESTING.md)
@@ -54,4 +57,4 @@ SVG playing-card artwork is integrated through the shared card renderer. Assets 
 
 The accessible CSS/text face remains in every rendered card and appears automatically if an image is missing, blocked, or fails to load. `joker-black.svg` and `joker-red.svg` are active game cards: each is played alone, beats any active quantity, and immediately clears the pile. Selectable hands reserve lift headroom so selected cards remain visible while horizontal scrolling continues to work.
 
-Use **How to Play** from the home screen, lobby, game menu, exchange, or results. The accessible modal preserves the current screen and continues receiving authoritative updates; the server turn timer does not pause. `/?instructions=president` opens it directly. Its serialisable registry in `public/js/games/instructions.js` is designed to add other games later without duplicating long rules text.
+Use **How to Play** from either home-screen game card; President also exposes it from the lobby, game menu, exchange, and results. The shared catalog owns public game metadata, and one accessible instruction dialog renders both games. `/?instructions=president` and `/?instructions=crazy-eights` open the corresponding rules directly.

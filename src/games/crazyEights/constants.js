@@ -1,0 +1,21 @@
+export const GAME_ID = "crazy-eights";
+export const RANKS = Object.freeze(["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"]);
+export const SUITS = Object.freeze(["clubs", "diamonds", "hearts", "spades"]);
+export const MIN_PLAYERS = 2;
+export const MAX_PLAYERS = 6;
+export const DECK_SIZE = 52;
+
+export const VALIDATION_CODES = Object.freeze({
+  NOT_YOUR_TURN: "NOT_YOUR_TURN",
+  ROUND_ALREADY_COMPLETE: "ROUND_ALREADY_COMPLETE",
+  PLAYER_NOT_FOUND: "PLAYER_NOT_FOUND",
+  CARD_NOT_OWNED: "CARD_NOT_OWNED",
+  MUST_PLAY_ONE_CARD: "MUST_PLAY_ONE_CARD",
+  CARD_DOES_NOT_MATCH: "CARD_DOES_NOT_MATCH",
+  EIGHT_REQUIRES_SUIT: "EIGHT_REQUIRES_SUIT",
+  INVALID_CHOSEN_SUIT: "INVALID_CHOSEN_SUIT",
+  MUST_PLAY_DRAWN_CARD: "MUST_PLAY_DRAWN_CARD",
+  NO_DRAWN_CARD_DECISION: "NO_DRAWN_CARD_DECISION",
+  CANNOT_DRAW_TWICE: "CANNOT_DRAW_TWICE",
+  DRAW_NOT_AVAILABLE: "DRAW_NOT_AVAILABLE",
+});

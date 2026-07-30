@@ -1,3 +1,5 @@
+import { getGameById } from "./gameCatalog.js";
+
 export const GAME_INSTRUCTIONS = Object.freeze({
   president: Object.freeze({
     id: "president",
@@ -17,11 +19,27 @@ export const GAME_INSTRUCTIONS = Object.freeze({
       ["Timer and connection", ["Each turn lasts 30 seconds.", "An active-pile timeout counts as a pass; an empty-pile timeout normally skips that turn.", "A disconnected player's timer continues, and players keep the existing reconnect grace period."]],
     ]),
   }),
+  "crazy-eights": Object.freeze({
+    id: "crazy-eights",
+    title: "How to Play Crazy Eights",
+    sections: Object.freeze([
+      ["Objective", ["Be the first player to empty your hand."]],
+      ["Players and deck", ["Crazy Eights supports 2–6 players and uses a standard 52-card deck. Jokers are not used."]],
+      ["Deal", ["Two players receive seven cards each. Three to six players receive five cards each.", "The remaining cards form the draw pile, and one non-eight card begins the discard pile."]],
+      ["Playing a card", ["On your turn, play one card that matches the top discard's rank, matches the active suit, or is an 8."]],
+      ["Eights", ["An 8 is wild. Choose clubs, diamonds, hearts, or spades when playing it.", "The physical top card remains the 8, while the chosen active suit controls suit matching for the next player."]],
+      ["Drawing", ["If you do not play from your hand, draw exactly one card.", "If it is playable, you may play that drawn card immediately or keep it and end your turn.", "You cannot draw repeatedly or play a different card from your original hand after drawing."]],
+      ["Empty draw pile", ["Keep the top discard in place and shuffle older discards into a new draw pile. The active suit stays unchanged."]],
+      ["Winning", ["The first player to empty their hand wins immediately."]],
+      ["Timer", ["Multiplayer will use a 30-second turn timer.", "A timeout will draw one card where possible and end the turn. A playable timeout-drawn card will never be played automatically."]],
+      ["Not included", ["The initial version has no jokers, draw twos, skips, reverses, penalty stacking, multiple-card plays, jump-ins, teams, or match scoring."]],
+    ]),
+  }),
 });
 
 export const getGameInstructions = (gameId) => GAME_INSTRUCTIONS[gameId] ?? null;
 export const nextInstructionDialogState = (state, action) => action === "open"
-  ? { open: true, gameId: "president" }
+  ? { open: true, gameId: state.gameId ?? "president" }
   : { open: false, gameId: state.gameId ?? "president" };
 
 export const createInstructionsDialog = ({ dialog, content, closeButton }) => {
@@ -29,8 +47,11 @@ export const createInstructionsDialog = ({ dialog, content, closeButton }) => {
   const close = () => { if (dialog.open) dialog.close(); };
   const open = (gameId = "president", trigger = document.activeElement) => {
     const game = getGameInstructions(gameId);
-    if (!game) return false;
+    const metadata = getGameById(gameId);
+    if (!game || !metadata) return false;
     opener = trigger;
+    dialog.querySelector("#instructions-game-name").textContent = metadata.name;
+    dialog.querySelector("#instructions-title").textContent = game.title;
     content.replaceChildren(...game.sections.map(([heading, items]) => {
       const section = document.createElement("section");
       const title = document.createElement("h3"); title.textContent = heading;

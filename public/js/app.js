@@ -10,6 +10,7 @@ import { createLobbyRenderer } from "./ui/lobbyRenderer.js";
 import { createResultsRenderer } from "./ui/resultsRenderer.js";
 import { createScreenManager, normaliseScreen } from "./ui/screenManager.js";
 import { createInstructionsDialog, getGameInstructions } from "./games/instructions.js";
+import { GAME_CATALOG } from "./games/gameCatalog.js";
 
 const params = new URLSearchParams(location.search);
 const demoMode = params.get("demo") === "1";
@@ -19,6 +20,14 @@ const connectionNodes = [...document.querySelectorAll("[data-connection]")];
 const setHomeMessage = (message) => { byId("home-message").textContent = message; };
 const updateConnection = (label, state) => connectionNodes.forEach((node) => {
   node.textContent = label; node.dataset.state = state;
+});
+GAME_CATALOG.forEach((game) => {
+  const card = document.querySelector(`[data-game-card="${game.id}"]`);
+  if (!card) return;
+  card.querySelector("[data-game-name]").textContent = game.name;
+  card.querySelector("[data-game-description]").textContent = game.description;
+  card.querySelector("[data-game-players]").textContent = `${game.minimumPlayers}–${game.maximumPlayers} players`;
+  card.querySelector("[data-game-status]").textContent = game.status === "available" ? "Available" : "In Development";
 });
 const instructions = createInstructionsDialog({
   dialog: byId("instructions-dialog"),
