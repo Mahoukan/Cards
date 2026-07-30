@@ -25,6 +25,9 @@ try {
   assert.equal(health.status, 200);
   assert.deepEqual(await health.json(), { status: "ok" });
   assert.equal((await fetch(`${origin}/ready`)).status, 200);
+  const cardAsset = await fetch(`${origin}/assets/cards/3-clubs.svg`);
+  assert.equal(cardAsset.status, 200);
+  assert.match(cardAsset.headers.get("content-type") ?? "", /image\/svg\+xml/);
 
   const first = createClient(origin, { transports: ["websocket"], forceNew: true });
   const second = createClient(origin, { transports: ["websocket"], forceNew: true });
@@ -82,7 +85,7 @@ try {
   assert.equal(limited.error.code, "RATE_LIMITED");
   assert.equal(application.roomManager.rooms.size, 1);
   assert.equal((await fetch(`${origin}/health`)).status, 200);
-  console.log("Smoke test passed: health, malformed input, throttling, two-player game, private views, legal play, resume, cleanup.");
+  console.log("Smoke test passed: health, SVG asset serving, malformed input, throttling, two-player game, private views, legal play, resume, cleanup.");
 } finally {
   sockets.forEach((socket) => socket.disconnect());
   await application.stop("smoke_test");

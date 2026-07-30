@@ -44,7 +44,10 @@ Invalid numeric values fail startup with a clear server-side error. Environment 
 - [Gameplay system](docs/GAMEPLAY_SYSTEM.md)
 - [Exchange system](docs/EXCHANGE_SYSTEM.md)
 - [President rules](docs/PRESIDENT_RULES.md)
+- [Card assets](docs/CARD_ASSETS.md)
 - [Railway deployment](docs/DEPLOYMENT.md)
 - [Real-device mobile checklist](docs/MOBILE_TESTING.md)
 
-Card artwork is optional. `public/assets/cards/` currently uses the accessible text/CSS fallback; future local assets may be placed there once a stable naming convention is chosen.
+SVG playing-card artwork is integrated through the shared card renderer. Assets live in `public/assets/cards/` and standard cards use the engine-ID convention `<rank>-<suit>.svg`, such as `10-diamonds.svg` or `Q-clubs.svg`. Ranks are `A`, `2`–`10`, `J`, `Q`, and `K`; suits are `clubs`, `diamonds`, `hearts`, and `spades`.
+
+The accessible CSS/text face remains in every rendered card and appears automatically if an image is missing, blocked, or fails to load. `joker-black.svg` and `joker-red.svg` are included in the asset folder but are not used by President gameplay.

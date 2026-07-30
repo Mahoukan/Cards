@@ -25,6 +25,18 @@ Record device, OS/browser version, deployment version, network, result, and scre
 - [ ] Connection, error, turn, ready, result, and exchange messages are concise
 - [ ] The timer is not announced every second
 
+## Card artwork
+
+- [ ] Every rank from Ace through King and all four suits display from SVG assets
+- [ ] Hearts and diamonds appear red; clubs and spades appear black
+- [ ] No card is stretched or cropped at any supported viewport
+- [ ] A deliberately missing image falls back to the text face without a broken-image icon
+- [ ] Large hands remain horizontally scrollable to both ends
+- [ ] Selected cards remain obvious through their lifted position and selected state
+- [ ] Pair, triple, and four-card piles remain recognisable and compact
+- [ ] The prepared exchange hand and visible received/given cards remain usable
+- [ ] Slow image loading does not block selection, gameplay, or the text fallback
+
 ## Recovery and networks
 
 - [ ] Lock/unlock, app switch, and slow connection
@@ -43,4 +55,3 @@ Record device, OS/browser version, deployment version, network, result, and scre
 - [ ] Leaving during exchange
 - [ ] Forfeit and six-player room behavior
 - [ ] Multiple rounds, exchange, and later-round Scum start
-
