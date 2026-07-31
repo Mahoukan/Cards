@@ -13,7 +13,7 @@ import { createCrazyEightsRenderer } from "./ui/crazyEightsRenderer.js";
 import { createCrazyEightsResultsRenderer } from "./ui/crazyEightsResultsRenderer.js";
 import { createScreenManager, normaliseScreen } from "./ui/screenManager.js";
 import { createInstructionsDialog, getGameInstructions } from "./games/instructions.js";
-import { GAME_CATALOG } from "./games/gameCatalog.js";
+import { GAME_CATALOG, getGameById } from "./games/gameCatalog.js";
 
 const params = new URLSearchParams(location.search);
 const demoMode = params.get("demo") === "1";
@@ -25,12 +25,12 @@ const updateConnection = (label, state) => connectionNodes.forEach((node) => {
   node.textContent = label; node.dataset.state = state;
 });
 GAME_CATALOG.forEach((game) => {
-  const card = document.querySelector(`[data-game-card="${game.id}"]`);
-  if (!card) return;
-  card.querySelector("[data-game-name]").textContent = game.name;
-  card.querySelector("[data-game-description]").textContent = game.description;
-  card.querySelector("[data-game-players]").textContent = `${game.minimumPlayers}–${game.maximumPlayers} players`;
-  card.querySelector("[data-game-status]").textContent = game.status === "available" ? "Available" : "In Development";
+  document.querySelectorAll(`[data-game-card="${game.id}"]`).forEach((card) => {
+    card.querySelector("[data-game-name]").textContent = game.name;
+    card.querySelector("[data-game-description]").textContent = game.description;
+    card.querySelector("[data-game-players]").textContent = `${game.minimumPlayers}–${game.maximumPlayers} players`;
+    card.querySelector("[data-game-status]").textContent = game.status === "available" ? "Available" : "In Development";
+  });
 });
 const instructions = createInstructionsDialog({
   dialog: byId("instructions-dialog"),
@@ -44,7 +44,6 @@ const gameClient = socket ? createGameClient(socket) : null;
 const exchangeClient = socket ? createExchangeClient(socket) : null;
 const crazyEightsClient = socket ? createCrazyEightsClient(socket) : null;
 let activeSession = demoMode ? null : readRoomSession();
-let selectedGameId = "president";
 let demoController;
 let lobbyRenderer;
 let gameRenderer;
@@ -249,33 +248,61 @@ document.addEventListener("click", (event) => {
   }
   const link = event.target.closest("[data-go]");
   if (!link) return;
-  if (link.dataset.gameId) {
-    selectedGameId = link.dataset.gameId;
-    byId("create-title").textContent = `Create a ${selectedGameId === "crazy-eights" ? "Crazy Eights" : "President"} room`;
-  }
   if (!demoMode && ["game", "exchange", "results", "lobby", "crazy-eights-game", "crazy-eights-results"].includes(link.dataset.go)) return;
   manager.show(link.dataset.go);
 });
 
+const createForm = byId("create-form");
+const joinForm = byId("join-form");
+const selectedGameInput = () => createForm.querySelector('input[name="gameId"]:checked');
+const syncSelectedGame = () => {
+  const game = getGameById(selectedGameInput()?.value);
+  if (!game || game.status !== "available") return false;
+  const rulesButton = byId("create-how-to-play");
+  rulesButton.dataset.instructions = game.instructionsId;
+  rulesButton.textContent = `How to Play ${game.name}`;
+  return true;
+};
+const syncFormValidity = (form, mode) => {
+  const data = new FormData(form);
+  const name = validateDisplayName(data.get("displayName"));
+  const validGame = mode !== "create" || syncSelectedGame();
+  const validCode = mode !== "join" || normaliseRoomCode(data.get("roomCode")).length === 4;
+  const pending = form.dataset.pending === "true";
+  form.querySelector("[type=submit]").disabled = pending || !name.valid || !validGame || !validCode;
+  return name.valid && validGame && validCode;
+};
+
 const bindForm = (formId, errorId, mode) => {
   const form = byId(formId);
+  form.addEventListener("input", () => syncFormValidity(form, mode));
+  form.addEventListener("change", () => syncFormValidity(form, mode));
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (form.dataset.pending === "true") return;
     const submit = form.querySelector("[type=submit]");
-    if (submit.disabled) return;
     const data = new FormData(form);
     const name = validateDisplayName(data.get("displayName"));
     const code = mode === "join" ? normaliseRoomCode(data.get("roomCode")) : "ABCD";
     const error = byId(errorId);
     if (!name.valid) { error.textContent = name.message; return; }
     if (mode === "join" && code.length !== 4) { error.textContent = "Enter a four-character room code."; return; }
+    const game = mode === "create" ? getGameById(data.get("gameId")) : null;
+    if (mode === "create" && (!game || game.status !== "available")) {
+      error.textContent = "Choose an available game.";
+      syncFormValidity(form, mode);
+      return;
+    }
     if (demoMode) {
       demoController.setIdentity(name.value, mode === "create", code); manager.show("lobby"); return;
     }
     if (!roomClient?.connected) { error.textContent = "Connect to the server before using room controls."; return; }
-    error.textContent = ""; submit.disabled = true; submit.textContent = mode === "create" ? "Creating…" : "Joining…";
-    const response = mode === "create" ? await roomClient.create(name.value, selectedGameId) : await roomClient.join(name.value, code);
-    submit.disabled = false; submit.textContent = mode === "create" ? "Create Room" : "Join Room";
+    error.textContent = ""; form.dataset.pending = "true"; form.setAttribute("aria-busy", "true");
+    submit.disabled = true; submit.textContent = mode === "create" ? "Creating…" : "Joining…";
+    const response = mode === "create" ? await roomClient.create(name.value, game.id) : await roomClient.join(name.value, code);
+    form.dataset.pending = "false"; form.removeAttribute("aria-busy");
+    submit.textContent = mode === "create" ? "Create Room" : "Join Room";
+    syncFormValidity(form, mode);
     if (!response.ok) { handleResponseError(response, errorId); return; }
     activeSession = response.session; saveRoomSession(activeSession);
     lobbyRenderer.update(response.room, activeSession.playerId); manager.show("lobby");
@@ -283,6 +310,8 @@ const bindForm = (formId, errorId, mode) => {
 };
 bindForm("create-form", "create-error", "create");
 bindForm("join-form", "join-error", "join");
+syncFormValidity(createForm, "create");
+syncFormValidity(joinForm, "join");
 
 if (!demoMode) {
   byId("copy-link").addEventListener("click", async () => {
@@ -295,7 +324,10 @@ if (!demoMode) {
 }
 
 const roomInput = byId("room-code");
-roomInput.addEventListener("input", () => { roomInput.value = normaliseRoomCode(roomInput.value); });
+roomInput.addEventListener("input", () => {
+  roomInput.value = normaliseRoomCode(roomInput.value);
+  syncFormValidity(joinForm, "join");
+});
 const gameMenu = byId("game-menu");
 byId("menu-button").addEventListener("click", () => {
   if (!gameMenu.open) gameMenu.showModal();
@@ -308,12 +340,12 @@ window.addEventListener("popstate", () => manager.show(new URLSearchParams(locat
 const sharedCode = normaliseRoomCode(params.get("room"));
 const requestedInstructions = params.get("instructions");
 if (sharedCode && !demoMode) {
-  roomInput.value = sharedCode; manager.show("join", { updateHistory: false });
+  roomInput.value = sharedCode; syncFormValidity(joinForm, "join"); manager.show("join-game", { updateHistory: false });
 } else {
   let initial = normaliseScreen(params.get("screen"));
   if (!demoMode && ["game", "exchange", "results", "lobby", "crazy-eights-game", "crazy-eights-results"].includes(initial)) initial = "home";
   manager.show(initial, { updateHistory: false });
 }
 if (getGameInstructions(requestedInstructions)) {
-  queueMicrotask(() => instructions.open(requestedInstructions, document.querySelector('[data-instructions="president"]')));
+  queueMicrotask(() => instructions.open(requestedInstructions, document.querySelector("section[data-screen]:not([hidden]) button")));
 }

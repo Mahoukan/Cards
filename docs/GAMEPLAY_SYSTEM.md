@@ -69,10 +69,20 @@ All active state is in memory and disappears after server restart or redeploymen
 
 Every room stores an immutable catalog `gameId`. Creation validates it; joining by code reads it from the room. A thin server router sends readiness, removal, replay, resume views, and publishing to either the established President coordinator or the dedicated Crazy Eights coordinator.
 
+The browser exposes one Start Game form. Its native radio choices are generated from the available shared catalog metadata, default to President, and send an explicit `president` or `crazy-eights` ID with creation. The server remains authoritative and rejects unknown or unavailable IDs; a missing ID still defaults to President for legacy callers. The game ID cannot be changed after room creation.
+
+Join Game collects only a display name and normalised four-character room code. A successful join response includes the stored game ID, which routes every participant to the corresponding lobby, active table, results, and reconnect view. Joiners never submit a game choice.
+
 Crazy Eights uses guarded `crazy-eights:play`, `crazy-eights:draw`, and `crazy-eights:keep-drawn` actions. Its personalised view exposes only the controlled hand plus public card counts, top discard, active suit, pile counts, deadline, action, and results. A playable draw creates a private drawn-card decision and retains the deadline; playing it or keeping it advances and starts one new timer.
 
 Reconnect restores the room-selected screen, private hand, decision state, and existing deadline. Expired or removed players have their cards shuffled back into the draw pile; no President roles or exchanges are applied. Completion records a winner and remaining counts, and unanimous next-round readiness starts a fresh deal.
 
 ## Player instructions
 
-The reusable serialisable catalog at `public/js/games/instructions.js` owns President's player-facing instructions under the stable `president` ID. One accessible modal renders that catalog from the home, lobby, active-game menu, exchange, results, and demo versions of those screens. `/?instructions=president` is the safe direct route; invalid IDs are ignored. Opening it does not navigate, mutate the session, or interrupt incoming views, and the authoritative timer continues.
+The reusable serialisable catalog at `public/js/games/instructions.js` owns player-facing instructions under the stable `president` and `crazy-eights` IDs. One accessible modal renders the selected catalog from the home rules choice, Start Game selector, lobby, active-game controls, exchange, and results. `/?instructions=president` and `/?instructions=crazy-eights` are safe direct routes; invalid IDs are ignored. Opening it preserves the current home-flow screen, does not mutate a room session or interrupt incoming views, and leaves the authoritative timer running.
+
+## Responsive browser layout
+
+The Home, Start Game, and Join Game screens share centred, maximum-width panels. They remain single-column on phones; game choices and suitable primary actions use two columns at wider breakpoints. Forms do not expand to the full browser width.
+
+Mobile Crazy Eights remains normal document flow with a horizontally scrolling hand and vertically scrolling page. At desktop widths only, its scoped grid places opponents and status beside the discard/active-suit table, then keeps decisions, hand, and actions full width below. President receives a desktop-only natural-height grid that removes excess viewport-distributed spacing. Neither desktop override uses fixed positioning or a rigid viewport height, and the mobile gameplay rules remain unchanged.

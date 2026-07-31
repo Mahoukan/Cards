@@ -10,65 +10,88 @@
   <body>
     <main id="app">
       <section class="screen welcome-screen" data-screen="home" aria-labelledby="home-title">
-        <div class="panel hero-panel game-picker-panel">
-          <p class="eyebrow">Private card table</p>
-          <h1 id="home-title">Card Table</h1>
-          <p class="lead">Choose a game for friends and family.</p>
-          <div class="game-picker" aria-label="Games">
-            <article class="game-choice" data-game-card="president">
-              <div class="game-choice-heading"><h2 data-game-name></h2><span class="game-status is-available" data-game-status></span></div>
-              <p data-game-description></p>
-              <p class="game-player-count" data-game-players></p>
-              <div class="stack">
-                <button class="button button-primary" type="button" data-go="create" data-game-id="president">Create President Room</button>
-                <button class="button button-secondary" type="button" data-go="join">Join President Room</button>
-                <button class="button button-quiet" type="button" data-instructions="president">How to Play</button>
-              </div>
-            </article>
-            <article class="game-choice" data-game-card="crazy-eights">
-              <div class="game-choice-heading"><h2 data-game-name></h2><span class="game-status is-available" data-game-status></span></div>
-              <p data-game-description></p>
-              <p class="game-player-count" data-game-players></p>
-              <div class="stack">
-                <button class="button button-primary" type="button" data-go="create" data-game-id="crazy-eights">Create Crazy Eights Room</button>
-                <button class="button button-quiet" type="button" data-instructions="crazy-eights">How to Play</button>
-              </div>
-            </article>
+        <div class="home-shell">
+          <div class="panel hero-panel">
+            <p class="eyebrow">Private card table</p>
+            <h1 id="home-title">Card Table</h1>
+            <p class="lead">Start a private game or join friends with a room code.</p>
+            <div class="home-actions">
+              <button class="button button-primary" type="button" data-go="start-game">Start Game</button>
+              <button class="button button-secondary" type="button" data-go="join-game">Join Game</button>
+            </div>
+            <button class="button button-quiet home-rules-button" type="button" data-go="rules">How to Play</button>
+            <p class="connection-status" data-connection data-state="disconnected" role="status" aria-live="polite">Disconnected</p>
+            <p id="home-message" class="home-message" aria-live="polite"></p>
+            <p class="fine-print">Rooms are private and shared by link or short code. Active rooms reset when the server restarts.</p>
           </div>
-          <p class="connection-status" data-connection data-state="disconnected" role="status" aria-live="polite">Disconnected</p>
-          <p id="home-message" class="home-message" aria-live="polite"></p>
-          <p class="fine-print">Rooms are private and shared by link or short code. Active rooms reset when the server restarts.</p>
         </div>
       </section>
 
-      <section class="screen form-screen" data-screen="create" aria-labelledby="create-title" hidden>
-        <div class="panel">
+      <section class="screen form-screen" data-screen="start-game" aria-labelledby="create-title" hidden>
+        <div class="panel setup-panel">
           <button class="back-button" type="button" data-go="home" aria-label="Back to home">← Back</button>
-          <p class="eyebrow">Prototype mode</p>
-          <h2 id="create-title">Create a room</h2>
-          <p class="muted">Choose the name the other players will see.</p>
+          <p class="eyebrow">Host a private table</p>
+          <h2 id="create-title">Start Game</h2>
+          <p class="muted">Choose your name and the game for this room.</p>
           <form id="create-form" novalidate>
             <label for="create-name">Display name</label>
             <input id="create-name" name="displayName" maxlength="20" autocomplete="nickname" required>
+            <fieldset class="game-selector">
+              <legend>Choose a game</legend>
+              <div class="game-options">
+                <label class="game-option" data-game-card="president">
+                  <input type="radio" name="gameId" value="president" checked>
+                  <span class="game-option-copy">
+                    <span class="game-choice-heading"><strong data-game-name></strong><span class="game-status is-available" data-game-status></span></span>
+                    <span class="game-player-count" data-game-players></span>
+                    <span class="game-description" data-game-description></span>
+                    <span class="game-option-selection">Selected</span>
+                  </span>
+                </label>
+                <label class="game-option" data-game-card="crazy-eights">
+                  <input type="radio" name="gameId" value="crazy-eights">
+                  <span class="game-option-copy">
+                    <span class="game-choice-heading"><strong data-game-name></strong><span class="game-status is-available" data-game-status></span></span>
+                    <span class="game-player-count" data-game-players></span>
+                    <span class="game-description" data-game-description></span>
+                    <span class="game-option-selection">Selected</span>
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+            <button class="button button-quiet form-rules-button" id="create-how-to-play" type="button" data-instructions="president">How to Play President</button>
             <p id="create-error" class="form-message" aria-live="polite"></p>
-            <button class="button button-primary" type="submit">Create Room</button>
+            <button class="button button-primary" type="submit" disabled>Create Room</button>
           </form>
         </div>
       </section>
 
-      <section class="screen form-screen" data-screen="join" aria-labelledby="join-title" hidden>
-        <div class="panel">
+      <section class="screen form-screen" data-screen="join-game" aria-labelledby="join-title" hidden>
+        <div class="panel room-form-panel">
           <button class="back-button" type="button" data-go="home" aria-label="Back to home">← Back</button>
-          <p class="eyebrow">Prototype mode</p>
-          <h2 id="join-title">Join a room</h2>
+          <p class="eyebrow">Enter a room code</p>
+          <h2 id="join-title">Join Game</h2>
           <form id="join-form" novalidate>
             <label for="join-name">Display name</label>
             <input id="join-name" name="displayName" maxlength="20" autocomplete="nickname" required>
             <label for="room-code">Room code</label>
             <input id="room-code" class="code-input" name="roomCode" maxlength="4" inputmode="text" autocomplete="off" autocapitalize="characters" required>
             <p id="join-error" class="form-message" aria-live="polite"></p>
-            <button class="button button-primary" type="submit">Join Room</button>
+            <button class="button button-primary" type="submit" disabled>Join Room</button>
           </form>
+        </div>
+      </section>
+
+      <section class="screen form-screen" data-screen="rules" aria-labelledby="rules-title" hidden>
+        <div class="panel room-form-panel">
+          <button class="back-button" type="button" data-go="home" aria-label="Back to home">← Back</button>
+          <p class="eyebrow">Game guides</p>
+          <h2 id="rules-title">How to Play</h2>
+          <p class="muted">Choose the rules you want to read.</p>
+          <div class="rules-choices">
+            <button class="button button-secondary" type="button" data-instructions="president">President Rules</button>
+            <button class="button button-secondary" type="button" data-instructions="crazy-eights">Crazy Eights Rules</button>
+          </div>
         </div>
       </section>
 

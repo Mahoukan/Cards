@@ -57,4 +57,8 @@ SVG playing-card artwork is integrated through the shared card renderer. Assets 
 
 The accessible CSS/text face remains in every rendered card and appears automatically if an image is missing, blocked, or fails to load. `joker-black.svg` and `joker-red.svg` are active game cards: each is played alone, beats any active quantity, and immediately clears the pile. Selectable hands reserve lift headroom so selected cards remain visible while horizontal scrolling continues to work.
 
-Create either game from its home-screen card, or join any room by code—the stored room game selects the correct lobby and table automatically. Use **How to Play** from either game card or live screen. The shared catalog owns public metadata, and `/?instructions=president` and `/?instructions=crazy-eights` open the corresponding rules directly.
+The home screen has one **Start Game** flow and one **Join Game** flow. Hosts enter a display name and choose President or Crazy Eights before creating the room. Joiners enter only their name and room code; the room's immutable game ID selects the correct lobby and table automatically.
+
+The shared catalog owns game names, descriptions, player limits, availability, and instruction IDs. Both games are available. The home rules choice, selected-game setup link, lobbies, and live screens all reuse the same instruction dialog. `/?instructions=president` and `/?instructions=crazy-eights` continue to open the corresponding rules directly.
+
+Home and setup content stays centred at readable widths. Mobile uses a single-column flow, while wider screens may place the primary home actions and game choices side by side. Gameplay remains vertically scrollable when its content exceeds the viewport; Crazy Eights uses a wider, scoped desktop grid without changing its mobile document flow.

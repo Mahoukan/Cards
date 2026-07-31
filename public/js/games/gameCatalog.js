@@ -6,6 +6,7 @@ export const GAME_CATALOG = Object.freeze([
     minimumPlayers: 2,
     maximumPlayers: 6,
     status: "available",
+    instructionsId: "president",
   }),
   Object.freeze({
     id: "crazy-eights",
@@ -14,6 +15,7 @@ export const GAME_CATALOG = Object.freeze([
     minimumPlayers: 2,
     maximumPlayers: 6,
     status: "available",
+    instructionsId: "crazy-eights",
   }),
 ]);
 
