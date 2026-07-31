@@ -1,5 +1,14 @@
 # Real-device mobile testing
 
+## Mahjong development demo
+
+Open `/?demo=1&game=mahjong&screen=game` at 320×568 and 390×844, then at
+1280×720 and 1440×900. Vertical page scrolling is allowed. Confirm no
+page-level horizontal overflow; the 14-tile hand scrolls horizontally; first
+and last tiles remain reachable; selected/newly drawn lifts retain stable
+stacking; missing SVGs show readable labels; and opponents, discards, melds,
+bonuses, walls, winds, and actions do not overlap.
+
 Record device, OS/browser version, deployment version, network, result, and screenshots for failures.
 
 ## Device and layout

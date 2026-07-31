@@ -35,6 +35,22 @@ export const GAME_INSTRUCTIONS = Object.freeze({
       ["Not included", ["The initial version has no jokers, draw twos, skips, reverses, penalty stacking, multiple-card plays, jump-ins, teams, or match scoring."]],
     ]),
   }),
+  mahjong: Object.freeze({
+    id: "mahjong",
+    title: "How to Play Mahjong",
+    sections: Object.freeze([
+      ["Objective", ["Create a legal winning hand worth at least 3 fan. A normal hand has four melds and one pair; Seven Pairs and Thirteen Orphans are also allowed.", "Press Mahjong to declare a win. A win is never declared automatically."]],
+      ["Turn structure", ["East begins with 14 playable tiles and discards first. Other players begin with 13.", "On a normal turn, draw one tile and discard one tile."]],
+      ["Chow, Pung, and Kong", ["A Chow is three consecutive suited tiles and may be claimed only by the next player. Winds and dragons cannot form Chows.", "A Pung is three identical tiles and may be claimed by any player.", "Kongs may be concealed, claimed from a discard, or added to an exposed Pung. Draw their replacement from the dead wall, replenish it from the live wall, and continue. An added Kong may be robbed for Mahjong."]],
+      ["Claim priority", ["Claims resolve as Mahjong, then Pung or Kong, then Chow. Players have 10 seconds to claim.", "Multiple winners from one discard are not allowed. For equal priority, the closest eligible player in turn order wins."]],
+      ["Flowers and seasons", ["Bonus tiles are exposed immediately and cannot form melds. Replace each from the dead wall, then replenish it from the live wall.", "Matching seat bonuses, complete flower or season sets, and all eight bonus tiles score extra."]],
+      ["Walls and exhaustion", ["Normal draws come from the live wall. Replacement draws come from the 14-tile dead wall, which is replenished from the live wall.", "If the live wall is exhausted, the round is a draw."]],
+      ["Dealer", ["East is dealer and remains dealer after an East win or drawn round. Otherwise the dealer moves clockwise.", "The match ends when dealer rotation returns to the original East player."]],
+      ["Scoring", ["At least 3 fan is required. Simplified traditional scoring has no maximum fan cap.", "All opponents pay a self-draw; only the discarder pays for a discard win.", "Only the matching seat wind scores; the prevailing wind scores independently. Matching flowers and seasons and complete bonus collections score extra."]],
+      ["Timeout", ["Disconnected players remain on the timer. On timeout, the server auto-discards the most recently drawn tile, or deterministically uses the rightmost concealed tile if there is no drawn tile."]],
+      ["Not included", ["Spectators, Japanese Riichi rules, Dora, Furiten, Yaku, betting, American Mahjong cards, wild jokers, and multiple discard winners are excluded."]],
+    ]),
+  }),
 });
 
 export const getGameInstructions = (gameId) => GAME_INSTRUCTIONS[gameId] ?? null;

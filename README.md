@@ -1,5 +1,11 @@
 # Card Table
 
+President and Crazy Eights remain playable. Mahjong is **In Development** with
+an isolated 144-tile model, live/dead walls, initial dealing and bonus
+replacement, instructions, and a responsive local demo. It cannot create a
+live room. Open `/?demo=1&game=mahjong&screen=game`; see
+`docs/MAHJONG_RULES.md` and `docs/MAHJONG_ASSETS.md`.
+
 President and Crazy Eights are available in private multiplayer rooms. Crazy Eights uses a standard 52-card deck without jokers and supports live turns, wild-suit choices, one-card drawing, reconnect, results, and replay.
 
 President is a complete, mobile-first, in-memory multiplayer MVP for private games with 2–6 friends. It includes a 54-card deck with two jokers, private rooms, reconnectable sessions, host migration, server-authoritative rounds and timers, forfeits, role exchanges, and consecutive rounds.

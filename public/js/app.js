@@ -14,6 +14,7 @@ import { createCrazyEightsResultsRenderer } from "./ui/crazyEightsResultsRendere
 import { createScreenManager, normaliseScreen } from "./ui/screenManager.js";
 import { createInstructionsDialog, getGameInstructions } from "./games/instructions.js";
 import { GAME_CATALOG, getGameById } from "./games/gameCatalog.js";
+import { renderMahjongDemo } from "./demo/mahjongDemo.js";
 
 const params = new URLSearchParams(location.search);
 const demoMode = params.get("demo") === "1";
@@ -257,11 +258,11 @@ const joinForm = byId("join-form");
 const selectedGameInput = () => createForm.querySelector('input[name="gameId"]:checked');
 const syncSelectedGame = () => {
   const game = getGameById(selectedGameInput()?.value);
-  if (!game || game.status !== "available") return false;
+  if (!game) return false;
   const rulesButton = byId("create-how-to-play");
   rulesButton.dataset.instructions = game.instructionsId;
   rulesButton.textContent = `How to Play ${game.name}`;
-  return true;
+  return game.status === "available";
 };
 const syncFormValidity = (form, mode) => {
   const data = new FormData(form);
@@ -343,9 +344,11 @@ if (sharedCode && !demoMode) {
   roomInput.value = sharedCode; syncFormValidity(joinForm, "join"); manager.show("join-game", { updateHistory: false });
 } else {
   let initial = normaliseScreen(params.get("screen"));
-  if (!demoMode && ["game", "exchange", "results", "lobby", "crazy-eights-game", "crazy-eights-results"].includes(initial)) initial = "home";
+  if (demoMode && params.get("game") === "mahjong" && params.get("screen") === "game") initial = "mahjong-game";
+  if (!demoMode && ["game", "exchange", "results", "lobby", "crazy-eights-game", "crazy-eights-results", "mahjong-game"].includes(initial)) initial = "home";
   manager.show(initial, { updateHistory: false });
 }
+if (demoMode && params.get("game") === "mahjong") renderMahjongDemo();
 if (getGameInstructions(requestedInstructions)) {
   queueMicrotask(() => instructions.open(requestedInstructions, document.querySelector("section[data-screen]:not([hidden]) button")));
 }

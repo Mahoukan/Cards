@@ -1,5 +1,15 @@
 # Gameplay system
 
+## Mahjong foundation
+
+Mahjong is In Development and disconnected from rooms, sockets, timers, and
+both existing game coordinators. `src/games/mahjong/` defines 42 faces, 144
+unique physical tiles, stable sorting, 2–4 seat mappings, a 14-tile dead wall,
+live/dead draws and replenishment, and an initial deal of 14 playable tiles to
+East and 13 to each other player. Flowers and seasons are exposed and
+repeatedly replaced. Solvers, claims, scoring, payments, turns, and multiplayer
+actions are deferred.
+
 Production hardening: Play and Pass use validated payloads, per-socket throttling, duplicate-submit locks, and acknowledgement timeouts while remaining server-authoritative. Controls disable while offline or resuming. `TURN_DURATION_MS` configures the turn timer.
 
 ## Automatic round start

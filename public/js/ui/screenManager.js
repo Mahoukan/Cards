@@ -1,5 +1,5 @@
 const SCREEN_ALIASES = new Map([["create", "start-game"], ["join", "join-game"]]);
-const VALID_SCREENS = new Set(["home", "start-game", "join-game", "rules", "lobby", "game", "exchange", "results", "crazy-eights-game", "crazy-eights-results"]);
+const VALID_SCREENS = new Set(["home", "start-game", "join-game", "rules", "lobby", "game", "exchange", "results", "crazy-eights-game", "crazy-eights-results", "mahjong-game"]);
 
 export const normaliseScreen = (value) => {
   const resolved = SCREEN_ALIASES.get(value) ?? value;
@@ -20,7 +20,7 @@ export const createScreenManager = ({ onChange = () => {} } = {}) => {
     current = next;
     document.body.dataset.screen = next;
     const generalTitle = { "start-game": "Start Game", "join-game": "Join Game", rules: "How to Play" }[next];
-    const gameName = next.startsWith("crazy-eights") ? "Crazy Eights" : "President";
+    const gameName = next.startsWith("crazy-eights") ? "Crazy Eights" : next.startsWith("mahjong") ? "Mahjong" : "President";
     document.title = next === "home" ? "Card Table" : `${generalTitle ?? gameName} · Card Table`;
     if (updateHistory) {
       const url = new URL(window.location.href);

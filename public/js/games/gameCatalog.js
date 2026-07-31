@@ -17,6 +17,15 @@ export const GAME_CATALOG = Object.freeze([
     status: "available",
     instructionsId: "crazy-eights",
   }),
+  Object.freeze({
+    id: "mahjong",
+    name: "Mahjong",
+    description: "Build four melds and a pair while claiming tiles and managing bonus tiles.",
+    minimumPlayers: 2,
+    maximumPlayers: 4,
+    status: "in-development",
+    instructionsId: "mahjong",
+  }),
 ]);
 
 export const getGameById = (gameId) =>
