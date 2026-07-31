@@ -74,12 +74,16 @@ export const createCrazyEightsRenderer = ({ onPlay, onDraw, onKeep, onKick, onLe
     }));
     byId("ce-hand-count").textContent = count(view.you.hand.length);
     const decision = view.you.turnState === "drawn-card-decision";
+    const choosingSuit = selected?.rank === "8";
+    byId("ce-decision-panel").hidden = !decision && !choosingSuit;
     byId("ce-decision").hidden = !decision;
-    byId("ce-suit-chooser").hidden = selected?.rank !== "8";
+    byId("ce-suit-chooser").hidden = !choosingSuit;
     document.querySelectorAll("[data-ce-suit]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.ceSuit === chosenSuit)));
     byId("ce-play").textContent = decision ? "Play Drawn Card" : "Play Card";
     byId("ce-play").disabled = !canAct() || !selected?.playable || (decision && selected.id !== view.you.drawnCardId) || (selected.rank === "8" && !chosenSuit);
+    byId("ce-draw").hidden = decision;
     byId("ce-draw").disabled = !canAct() || !view.you.canDraw;
+    byId("ce-keep").hidden = !decision;
     byId("ce-keep").disabled = !canAct() || !view.you.canKeepDrawn;
     const actor = view.players.find(({ id }) => id === view.lastAction?.playerId)?.name ?? "A player";
     byId("ce-notice").textContent = view.lastAction?.type === "timeout"

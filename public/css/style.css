@@ -147,18 +147,39 @@ input { width: 100%; min-height: 50px; padding: 10px 13px; border: 2px solid #aa
 .choice-buttons .button, #call-consecutive { min-height: 40px; padding: 7px 12px; }
 .choice-buttons [aria-pressed="true"], #call-consecutive[aria-pressed="true"] { outline: 3px solid var(--gold); background: #173e2b; color: white; }
 .active-rule-status { min-height: 1em; color: #ffe89c; font-weight: 800; }
-.ce-game-screen { grid-template-rows: auto auto minmax(120px, 1fr) auto auto auto auto minmax(120px, 1fr) auto; }
-.ce-table { display: grid; grid-template-columns: minmax(100px, .8fr) minmax(145px, 1.2fr); align-items: center; gap: 12px; min-height: 0; color: white; text-align: center; }
+.game-screen.ce-game-screen {
+  height: auto;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: visible;
+}
+.ce-game-screen > * { flex: none; min-width: 0; }
+.ce-game-screen .game-header > div { min-width: 0; }
+.ce-game-screen .room-chip, .ce-game-screen .round-label { white-space: nowrap; }
+.ce-game-screen .header-actions { justify-content: flex-end; }
+.ce-game-screen .opponents { width: 100%; }
+.ce-table { display: grid; grid-template-columns: minmax(100px, .8fr) minmax(145px, 1.2fr); align-items: center; gap: 12px; color: white; text-align: center; }
+.ce-table > div { min-width: 0; }
 .ce-suit-panel { display: grid; gap: 7px; padding: 16px 10px; border: 2px solid var(--gold); border-radius: 14px; background: rgb(0 30 18 / 45%); }
 .ce-suit-panel span, .ce-suit-panel small { font-size: .74rem; }
 .ce-suit-panel strong { font-size: 1.25rem; }
+.ce-status-region { display: grid; gap: 4px; }
+.ce-status-region .turn-panel { min-height: 44px; }
+.ce-status-region .turn-panel strong { overflow-wrap: anywhere; }
+.ce-status-region .game-notice { min-height: 0; line-height: 1.35; overflow-wrap: anywhere; }
+.ce-status-region .game-notice:empty { display: none; }
+.ce-decision-panel { display: grid; gap: 8px; padding: 10px; border: 1px solid rgb(255 255 255 / 20%); border-radius: 12px; background: rgb(0 30 18 / 45%); }
+.ce-decision-panel .callout { margin: 0; }
 .ce-suit-chooser { color: white; text-align: center; }
 .ce-suit-chooser p { margin: 0 0 6px; font-weight: 800; }
 .ce-suit-chooser > div { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-.ce-suit-chooser button { min-height: 40px; border: 1px solid white; border-radius: 10px; background: white; color: var(--ink); font-weight: 800; }
+.ce-suit-chooser button { min-height: 44px; padding: 7px; border: 1px solid white; border-radius: 10px; background: white; color: var(--ink); font-weight: 800; }
 .ce-suit-chooser button[aria-pressed="true"] { outline: 3px solid var(--gold); background: #173e2b; color: white; }
-.ce-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
-.ce-controls #ce-leave { grid-column: 1 / -1; }
+.ce-primary-actions, .ce-secondary-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.ce-primary-actions .button, .ce-secondary-actions .button { min-height: 44px; padding-inline: 9px; }
+.ce-secondary-actions { padding-bottom: 2px; }
 .playing-card.is-unplayable { filter: grayscale(.65); opacity: .58; }
 .playing-card.is-newly-drawn { box-shadow: 0 0 0 3px var(--gold), 0 5px 10px rgb(0 0 0 / 30%); }
 
@@ -170,6 +191,11 @@ input { width: 100%; min-height: 50px; padding: 10px 13px; border: 2px solid #aa
 .hand .playing-card { position: absolute; z-index: calc(var(--card-stack-index, 0) + 1); top: calc(var(--card-selection-lift) + .2rem); left: calc(var(--card-stack-index, 0) * var(--card-step)); }
 .hand .playing-card { touch-action: pan-x; }
 .hand { position: relative; }
+.ce-game-screen .hand {
+  width: 100%;
+  height: calc(var(--card-height) + var(--card-selection-lift) + .75rem);
+  min-height: calc(var(--card-height) + var(--card-selection-lift) + .75rem);
+}
 .playing-card {
   position: relative;
   width: var(--card-width); height: var(--card-height); padding: 0; overflow: hidden; border: 2px solid #d7d3c8; border-radius: 9px;
@@ -225,11 +251,22 @@ button.playing-card { cursor: pointer; }
   .pile-cards { min-height: 64px; }
   .pile-cards .playing-card { width: 47px; height: 64px; }
   .hand { height: calc(var(--card-height) + var(--card-selection-lift) + .4rem); }
+  .game-screen.ce-game-screen {
+    height: auto;
+    min-height: 100dvh;
+    gap: 8px;
+    overflow: visible;
+  }
+  .ce-game-screen .hand {
+    height: calc(var(--card-height) + var(--card-selection-lift) + .75rem);
+    min-height: calc(var(--card-height) + var(--card-selection-lift) + .75rem);
+  }
 }
 @media (max-width: 340px) {
   .screen { padding-left: max(9px, env(safe-area-inset-left)); padding-right: max(9px, env(safe-area-inset-right)); }
   .panel { padding: 16px; }
   .game-screen { gap: 4px; }
+  .game-screen.ce-game-screen { gap: 8px; }
   .opponent { flex-basis: 82px; }
 }
 @media (min-width: 700px) {
