@@ -7,8 +7,14 @@ both existing game coordinators. `src/games/mahjong/` defines 42 faces, 144
 unique physical tiles, stable sorting, 2–4 seat mappings, a 14-tile dead wall,
 live/dead draws and replenishment, and an initial deal of 14 playable tiles to
 East and 13 to each other player. Flowers and seasons are exposed and
-repeatedly replaced. Solvers, claims, scoring, payments, turns, and multiplayer
-actions are deferred.
+repeatedly replaced.
+
+The isolated second-stage engine adds face-based standard, Seven Pairs, and
+Thirteen Orphans solvers; exposed-meld validation; Chow/Pung/Kong candidates;
+winning-face detection; configurable fan items; the 3-fan minimum; uncapped
+zero-sum payments; and structured false-Mahjong evaluation. It returns plain
+serialisable results and retains physical tile IDs in decompositions. No result
+currently changes room, turn, timer, or player state.
 
 Production hardening: Play and Pass use validated payloads, per-socket throttling, duplicate-submit locks, and acknowledgement timeouts while remaining server-authoritative. Controls disable while offline or resuming. `TURN_DURATION_MS` configures the turn timer.
 

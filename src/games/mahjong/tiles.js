@@ -55,3 +55,21 @@ export const compareMahjongTiles = (a, b) => {
 };
 
 export const sortMahjongTiles = (tiles) => [...tiles].sort(compareMahjongTiles);
+
+export const getTileFaceKey = (tile) =>
+  typeof tile?.faceId === "string" && MAHJONG_FACE_BY_ID[tile.faceId] ? tile.faceId : null;
+
+export const groupTilesByFace = (tiles) => {
+  const groups = new Map();
+  for (const tile of tiles ?? []) {
+    const key = getTileFaceKey(tile);
+    if (!key) continue;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(tile);
+  }
+  return groups;
+};
+
+export const countTilesByFace = (tiles) => new Map(
+  [...groupTilesByFace(tiles).entries()].map(([key, group]) => [key, group.length]),
+);

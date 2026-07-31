@@ -9,6 +9,11 @@ and last tiles remain reachable; selected/newly drawn lifts retain stable
 stacking; missing SVGs show readable labels; and opponents, discards, melds,
 bonuses, walls, winds, and actions do not overlap.
 
+Use every option in the Development scoring inspector. Confirm hand type,
+structural validity, named fan items, total fan, 3-fan result, and payment
+deltas remain readable. Check that the selector and score lists do not create
+horizontal overflow at phone widths and that all 42 SVG faces still render.
+
 Record device, OS/browser version, deployment version, network, result, and screenshots for failures.
 
 ## Device and layout

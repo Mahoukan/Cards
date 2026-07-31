@@ -250,6 +250,15 @@
           <div class="section-heading"><h3 id="mahjong-hand-heading">Your hand · East</h3><span>14 playable tiles</span></div>
           <div id="mahjong-hand" class="mahjong-hand" role="group" aria-label="Your Mahjong tiles"></div>
         </section>
+        <section class="mahjong-scoring-panel" aria-labelledby="mahjong-scoring-heading">
+          <div class="section-heading">
+            <div><p class="eyebrow">Development scoring inspector</p><h3 id="mahjong-scoring-heading">Winning-hand examples</h3></div>
+            <label>Example
+              <select id="mahjong-score-example" aria-controls="mahjong-score-output"></select>
+            </label>
+          </div>
+          <div id="mahjong-score-output" aria-live="polite">Loading authoritative scoring examples…</div>
+        </section>
         <div class="mahjong-primary-actions"><button type="button" class="button button-primary">Discard selected tile</button></div>
       </section>
 

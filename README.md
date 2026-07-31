@@ -2,9 +2,11 @@
 
 President and Crazy Eights remain playable. Mahjong is **In Development** with
 an isolated 144-tile model, live/dead walls, initial dealing and bonus
-replacement, instructions, and a responsive local demo. It cannot create a
-live room. Open `/?demo=1&game=mahjong&screen=game`; see
-`docs/MAHJONG_RULES.md` and `docs/MAHJONG_ASSETS.md`.
+replacement, winning-hand solvers, claim/wait candidates, simplified fan
+scoring, payments, declaration evaluation, instructions, and a responsive
+local scoring demo. It cannot create a live room. Open
+`/?demo=1&game=mahjong&screen=game`; see `docs/MAHJONG_RULES.md`,
+`docs/MAHJONG_SCORING.md`, and `docs/MAHJONG_ASSETS.md`.
 
 President and Crazy Eights are available in private multiplayer rooms. Crazy Eights uses a standard 52-card deck without jokers and supports live turns, wild-suit choices, one-card drawing, reconnect, results, and replay.
 
@@ -55,6 +57,7 @@ Invalid numeric values fail startup with a clear server-side error. Environment 
 - [Exchange system](docs/EXCHANGE_SYSTEM.md)
 - [President rules](docs/PRESIDENT_RULES.md)
 - [Crazy Eights rules](docs/CRAZY_EIGHTS_RULES.md)
+- [Mahjong scoring](docs/MAHJONG_SCORING.md)
 - [Card assets](docs/CARD_ASSETS.md)
 - [Railway deployment](docs/DEPLOYMENT.md)
 - [Real-device mobile checklist](docs/MOBILE_TESTING.md)

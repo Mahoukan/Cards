@@ -3,3 +3,8 @@ export * from "./tiles.js";
 export * from "./wall.js";
 export * from "./setup.js";
 export * from "./rules.js";
+export * from "./melds.js";
+export * from "./handSolver.js";
+export * from "./scoring.js";
+export * from "./payments.js";
+export * from "./validation.js";

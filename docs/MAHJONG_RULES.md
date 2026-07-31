@@ -35,6 +35,19 @@ winds and matching/complete bonus collections score.
 Timeout discards the most recent draw, or the rightmost concealed tile.
 Disconnected players remain timed.
 
-Hand solvers, claims, scoring/payments, turn coordination, rooms, sockets,
-reconnect, timers, spectators, Riichi/Dora/Furiten/Yaku, betting, American
-cards, jokers, and multiple discard winners are deferred.
+The isolated engine validates standard four-meld-and-pair hands, Seven Pairs,
+and Thirteen Orphans. It validates exposed Chows, Pungs, and Kongs, finds claim
+candidates and structurally winning tile faces, and preserves physical tile
+IDs while comparing equivalent faces. Four identical tiles may form two pairs
+for Seven Pairs. A Kong counts as one meld.
+
+Simplified Hong Kong-style fan scoring is implemented with a 3-fan minimum and
+no cap. Payments are `2 ^ fan`: only the responsible player pays a discard or
+robbed-Kong win, while every opponent pays a self-draw, replacement-tile, or
+last-live-tile win. See `MAHJONG_SCORING.md`.
+
+A false Mahjong declaration is evaluated authoritatively and provisionally
+suggests a current-round forfeit. It does not mutate a room or apply point
+penalties. Turn coordination, rooms, sockets, reconnect, timers, spectators,
+Riichi/Dora/Furiten/Yaku, betting, American cards, jokers, and multiple
+discard winners remain deferred.

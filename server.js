@@ -10,6 +10,7 @@ import { SocketActionLimiter } from "./src/socketSupport.js";
 import { RoomManager, registerRoomSocketHandlers } from "./src/rooms/index.js";
 import { GameCoordinator, registerGameSocketHandlers } from "./src/game/index.js";
 import { CrazyEightsCoordinator, registerCrazyEightsSocketHandlers } from "./src/games/crazyEights/index.js";
+import { createMahjongScoringDemo } from "./src/games/mahjong/demoScenarios.js";
 
 export const createApplication = ({
   config = createConfig(),
@@ -36,6 +37,10 @@ export const createApplication = ({
   let forceTimer = null;
 
   app.use(express.static(path.join(path.dirname(fileURLToPath(import.meta.url)), "public")));
+  app.get("/demo/mahjong-scoring", (_request, response) => {
+    if (config.nodeEnv === "production") return response.status(404).json({ error: "Not found" });
+    return response.json({ scenarios: createMahjongScoringDemo() });
+  });
   app.get("/health", (_request, response) => response.json({ status: "ok" }));
   app.get("/ready", (_request, response) => response.status(ready ? 200 : 503).json({ status: ready ? "ready" : "unavailable" }));
 

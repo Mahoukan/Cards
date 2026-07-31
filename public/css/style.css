@@ -251,6 +251,15 @@ input { width: 100%; min-height: 50px; padding: 10px 13px; border: 2px solid #aa
 .mahjong-hand .mahjong-tile:last-child { margin-right: 3px; }
 .mahjong-hand .mahjong-tile.is-selected { z-index: calc(var(--tile-stack-index) + 1); }
 .mahjong-primary-actions { display: grid; padding-bottom: env(safe-area-inset-bottom); }
+.mahjong-scoring-panel { padding: 14px; border: 1px solid rgb(255 255 255 / 18%); border-radius: 13px; background: rgb(0 29 18 / 62%); }
+.mahjong-scoring-panel .section-heading { align-items: end; gap: 12px; }
+.mahjong-scoring-panel h3, .mahjong-scoring-panel .eyebrow, .mahjong-scoring-panel label { color: white; }
+.mahjong-scoring-panel label { display: grid; gap: 4px; min-width: min(100%, 260px); font-size: .72rem; font-weight: 800; }
+.mahjong-scoring-panel select { width: 100%; min-height: 40px; padding: 7px; border-radius: 7px; background: white; color: var(--ink); }
+.mahjong-score-summary { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; margin: 12px 0; }
+.mahjong-score-summary dt { color: #bad5c5; font-size: .72rem; font-weight: 800; text-transform: uppercase; }
+.mahjong-score-summary dd { margin: 0; color: white; overflow-wrap: anywhere; }
+.mahjong-score-list, .mahjong-payment-list { margin: 8px 0 0; padding-left: 20px; color: #e9f4ed; line-height: 1.45; }
 
 .hand-area { min-height: 0; padding: 8px 9px 2px; border-radius: 13px 13px 0 0; background: rgb(0 29 18 / 35%); }
 .hand-area .section-heading { padding: 0 3px 5px; }
@@ -337,6 +346,9 @@ button.playing-card { cursor: pointer; }
   .game-screen { gap: 4px; }
   .game-screen.ce-game-screen { gap: 8px; }
   .opponent { flex-basis: 82px; }
+}
+@media (max-width: 520px) {
+  .mahjong-scoring-panel .section-heading { align-items: stretch; flex-direction: column; }
 }
 @media (min-width: 700px) {
   .screen:not(.game-screen) { padding-block: 40px; }

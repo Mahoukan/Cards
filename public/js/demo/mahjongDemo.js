@@ -1,4 +1,5 @@
 import { createMahjongTileElement } from "../ui/mahjongTileRenderer.js";
+import { renderMahjongScoringScenario } from "../ui/mahjongScoreRenderer.js";
 
 const suit = (name, rank, copy = 1) => ({
   id: `${name}-${rank}-${copy}`, faceId: `${name}-${rank}`, category: "suit", suit: name, rank,
@@ -26,6 +27,30 @@ const renderGroup = (id, tiles, state) => {
   document.getElementById(id).replaceChildren(...tiles.map((tile) => createMahjongTileElement(tile, { state })));
 };
 
+const renderScoringPanel = async () => {
+  const select = document.getElementById("mahjong-score-example");
+  const output = document.getElementById("mahjong-score-output");
+  try {
+    const response = await fetch("/demo/mahjong-scoring");
+    if (!response.ok) throw new Error("Scoring examples are available only in development.");
+    const { scenarios } = await response.json();
+    select.replaceChildren(...scenarios.map((scenario) => {
+      const option = document.createElement("option");
+      option.value = scenario.id;
+      option.textContent = scenario.name;
+      return option;
+    }));
+    const show = () => renderMahjongScoringScenario(
+      output,
+      scenarios.find(({ id }) => id === select.value) ?? scenarios[0],
+    );
+    select.addEventListener("change", show);
+    show();
+  } catch (error) {
+    output.textContent = error.message;
+  }
+};
+
 export const renderMahjongDemo = () => {
   const hand = document.getElementById("mahjong-hand");
   hand.replaceChildren(...demoHand.map((tile, index) => createMahjongTileElement(tile, {
@@ -40,4 +65,5 @@ export const renderMahjongDemo = () => {
     suit("bamboo", 1), honor("south-wind", "wind", "south"), suit("dots", 7),
     honor("white-dragon", "dragon", "white"), suit("characters", 9), suit("bamboo", 3),
   ], "discarded");
+  void renderScoringPanel();
 };
