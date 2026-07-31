@@ -1,6 +1,6 @@
 # Crazy Eights rules
 
-Crazy Eights is currently an isolated rules engine with player instructions. It is not connected to live rooms, Socket.IO, browser gameplay, or the server turn timer.
+Crazy Eights is playable in private 2–6 player rooms. The isolated rules engine remains authoritative while a dedicated coordinator connects it to rooms, personalised views, guarded Socket.IO actions, deadlines, reconnect, forfeits, results, and replay.
 
 ## Objective and setup
 
@@ -29,12 +29,24 @@ If the draw pile is empty, the top discard stays in place and older discards are
 
 ## Timeout
 
-The engine provides a deterministic timeout operation for later multiplayer integration. It draws one card where possible, always keeps it, and ends the turn. It never automatically plays a playable drawn card. If a drawn-card decision is already open, timeout keeps that card and advances.
+The engine timeout draws one card where possible, always keeps it, and ends the turn. It never automatically plays a playable drawn card. If a drawn-card decision is already open, timeout keeps that card and advances.
+
+Live rooms use the shared server-authoritative 30-second timer. Stale callbacks are ignored. A playable manual draw keeps the existing deadline while the player decides; actions that advance the turn replace the expired timer with exactly one new deadline.
 
 ## Excluded house rules
 
 The initial version does not include jokers, draw twos, skip cards, reverse cards, penalty stacking, multiple-card plays, jump-ins, teams, or match scoring.
 
+## Multiplayer interface
+
+Rooms store the immutable `crazy-eights` game ID. Clients send only `crazy-eights:play`, `crazy-eights:draw`, and `crazy-eights:keep-drawn`; the server derives room, player, legality, active suit, and decision state.
+
+Personalised views include the controlled hand and playable flags. Public data is limited to player names and card counts, connection state, current player, top discard, active suit, pile counts, recent action, deadline, and winner. Draw-pile order, opponent cards, socket IDs, and reconnect tokens are never included.
+
+Disconnected seats remain during the existing grace period and their timer continues. Reconnect restores the private hand, any drawn-card decision, and unchanged deadline. Permanent removal returns owned cards to the shuffled draw pile. If one active player remains, that player wins.
+
+After completion, results show the winner and remaining card counts. Current room members can ready up to create a fresh deal and one new timer.
+
 ## Implementation boundary
 
-The engine uses plain serialisable state under `src/games/crazyEights/`. It contains no Express, Socket.IO, DOM, room, reconnect, host, or timer-handle dependencies. Normal invalid actions return structured validation results without mutating state.
+The engine uses plain serialisable state under `src/games/crazyEights/` and remains independent of Express, Socket.IO, DOM, rooms, reconnect tokens, and timer handles. Coordinator, view, and socket adapter modules surround it without moving game legality into handlers.

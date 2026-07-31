@@ -30,8 +30,11 @@ export const registerRoomSocketHandlers = (io, roomManager, coordinator = null, 
   };
 
   io.on("connection", (socket) => {
-    socketRequest({ socket, event: "room:create", schema: { displayName: { type: "string", min: 1, max: 20 } }, limiter, logger, handler: (payload) => {
-      const result = roomManager.createRoom({ displayName: payload.displayName, socketId: socket.id });
+    socketRequest({ socket, event: "room:create", schema: {
+      displayName: { type: "string", min: 1, max: 20 },
+      gameId: { type: "string", min: 1, max: 30, optional: true },
+    }, limiter, logger, handler: (payload) => {
+      const result = roomManager.createRoom({ displayName: payload.displayName, gameId: payload.gameId, socketId: socket.id });
       if (result.ok) {
         socket.join(result.room.code);
         broadcast(result.room);
@@ -71,6 +74,7 @@ export const registerRoomSocketHandlers = (io, roomManager, coordinator = null, 
         ? {
             ...result,
             game: coordinator.getView(result.room.code, result.session.playerId),
+            crazyEights: coordinator.getCrazyEightsView?.(result.room.code, result.session.playerId) ?? null,
             exchange: coordinator.getExchangeView(result.room.code, result.session.playerId),
           }
         : result;

@@ -9,6 +9,9 @@ export const createLobbyRenderer = ({ onReady, onKick, onLeave }) => {
     if (!room) return;
     document.querySelectorAll("[data-room-code]").forEach((node) => { node.textContent = room.code; });
     byId("player-count").textContent = `${room.playerCount} / ${room.maximumPlayers}`;
+    byId("lobby-game-name").textContent = room.gameName;
+    byId("lobby-game-description").textContent = room.gameDescription;
+    byId("lobby-how-to-play").dataset.instructions = room.gameId;
     const current = room.players.find(({ id }) => id === playerId);
     const isHost = room.hostPlayerId === playerId;
     byId("player-list").replaceChildren(...room.players.map((player) => {
@@ -40,7 +43,7 @@ export const createLobbyRenderer = ({ onReady, onKick, onLeave }) => {
     byId("lobby-status").textContent = !connected
       ? "Connection lost. Your seat is reserved for 60 seconds; trying to reconnect…"
       : room.canStart
-        ? "Everyone is ready. Real gameplay will be connected in Stage 5."
+        ? `Everyone is ready. Starting ${room.gameName}…`
         : `At least ${room.minimumPlayers} players are required. Every player must be connected and ready.`;
     byId("lobby-status").classList.toggle("is-ready", room.canStart);
   };

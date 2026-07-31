@@ -150,3 +150,33 @@ export function timeoutTurn(state, playerId, { random = Math.random } = {}) {
     ? { ...player, hand: [...player.hand, { ...drawn }] } : player);
   return { ok: true, state: finishTurn({ ...available, players, drawPile }, playerId), drewCard: true };
 }
+
+export function removePlayer(state, playerId, { random = Math.random } = {}) {
+  if (state.phase === "complete") return reject(state, VALIDATION_CODES.ROUND_ALREADY_COMPLETE);
+  const removed = state.players.find(({ id }) => id === playerId);
+  if (!removed) return reject(state, VALIDATION_CODES.PLAYER_NOT_FOUND);
+  const players = state.players.filter(({ id }) => id !== playerId);
+  if (!players.length) {
+    return { ok: true, state: { ...state, phase: "complete", players: [], currentPlayerId: null, winnerPlayerId: null, revision: state.revision + 1 } };
+  }
+  const drawPile = shuffleCrazyEightsDeck([...state.drawPile, ...removed.hand], random);
+  if (players.length === 1) {
+    return {
+      ok: true,
+      state: {
+        ...state, phase: "complete", players, drawPile, currentPlayerId: null,
+        turnState: "normal", drawnCardId: null, winnerPlayerId: players[0].id, revision: state.revision + 1,
+      },
+    };
+  }
+  const currentPlayerId = state.currentPlayerId === playerId ? advancePlayer(state, playerId) : state.currentPlayerId;
+  return {
+    ok: true,
+    state: {
+      ...state, players, drawPile, currentPlayerId,
+      turnState: state.currentPlayerId === playerId ? "normal" : state.turnState,
+      drawnCardId: state.currentPlayerId === playerId ? null : state.drawnCardId,
+      revision: state.revision + 1,
+    },
+  };
+}

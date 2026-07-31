@@ -1,6 +1,6 @@
 # Card Table
 
-President is available and fully playable in private multiplayer rooms. Crazy Eights is in development: its 52-card, joker-free rules engine and How to Play instructions exist, but it is not yet connected to live rooms or Socket.IO.
+President and Crazy Eights are available in private multiplayer rooms. Crazy Eights uses a standard 52-card deck without jokers and supports live turns, wild-suit choices, one-card drawing, reconnect, results, and replay.
 
 President is a complete, mobile-first, in-memory multiplayer MVP for private games with 2–6 friends. It includes a 54-card deck with two jokers, private rooms, reconnectable sessions, host migration, server-authoritative rounds and timers, forfeits, role exchanges, and consecutive rounds.
 
@@ -57,4 +57,4 @@ SVG playing-card artwork is integrated through the shared card renderer. Assets 
 
 The accessible CSS/text face remains in every rendered card and appears automatically if an image is missing, blocked, or fails to load. `joker-black.svg` and `joker-red.svg` are active game cards: each is played alone, beats any active quantity, and immediately clears the pile. Selectable hands reserve lift headroom so selected cards remain visible while horizontal scrolling continues to work.
 
-Use **How to Play** from either home-screen game card; President also exposes it from the lobby, game menu, exchange, and results. The shared catalog owns public game metadata, and one accessible instruction dialog renders both games. `/?instructions=president` and `/?instructions=crazy-eights` open the corresponding rules directly.
+Create either game from its home-screen card, or join any room by code—the stored room game selects the correct lobby and table automatically. Use **How to Play** from either game card or live screen. The shared catalog owns public metadata, and `/?instructions=president` and `/?instructions=crazy-eights` open the corresponding rules directly.

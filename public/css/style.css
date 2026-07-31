@@ -147,6 +147,20 @@ input { width: 100%; min-height: 50px; padding: 10px 13px; border: 2px solid #aa
 .choice-buttons .button, #call-consecutive { min-height: 40px; padding: 7px 12px; }
 .choice-buttons [aria-pressed="true"], #call-consecutive[aria-pressed="true"] { outline: 3px solid var(--gold); background: #173e2b; color: white; }
 .active-rule-status { min-height: 1em; color: #ffe89c; font-weight: 800; }
+.ce-game-screen { grid-template-rows: auto auto minmax(120px, 1fr) auto auto auto auto minmax(120px, 1fr) auto; }
+.ce-table { display: grid; grid-template-columns: minmax(100px, .8fr) minmax(145px, 1.2fr); align-items: center; gap: 12px; min-height: 0; color: white; text-align: center; }
+.ce-suit-panel { display: grid; gap: 7px; padding: 16px 10px; border: 2px solid var(--gold); border-radius: 14px; background: rgb(0 30 18 / 45%); }
+.ce-suit-panel span, .ce-suit-panel small { font-size: .74rem; }
+.ce-suit-panel strong { font-size: 1.25rem; }
+.ce-suit-chooser { color: white; text-align: center; }
+.ce-suit-chooser p { margin: 0 0 6px; font-weight: 800; }
+.ce-suit-chooser > div { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.ce-suit-chooser button { min-height: 40px; border: 1px solid white; border-radius: 10px; background: white; color: var(--ink); font-weight: 800; }
+.ce-suit-chooser button[aria-pressed="true"] { outline: 3px solid var(--gold); background: #173e2b; color: white; }
+.ce-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.ce-controls #ce-leave { grid-column: 1 / -1; }
+.playing-card.is-unplayable { filter: grayscale(.65); opacity: .58; }
+.playing-card.is-newly-drawn { box-shadow: 0 0 0 3px var(--gold), 0 5px 10px rgb(0 0 0 / 30%); }
 
 .hand-area { min-height: 0; padding: 8px 9px 2px; border-radius: 13px 13px 0 0; background: rgb(0 29 18 / 35%); }
 .hand-area .section-heading { padding: 0 3px 5px; }

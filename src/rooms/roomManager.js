@@ -3,6 +3,7 @@ import { ERROR_CODES, MAXIMUM_PLAYERS, RECONNECT_GRACE_MS, ROOM_STATUS } from ".
 import { generateRoomCode } from "./roomCodes.js";
 import { createPublicRoomView } from "./roomViews.js";
 import { namesMatch, normaliseDisplayName, normaliseRoomCode } from "./validation.js";
+import { getGameById } from "../../public/js/games/gameCatalog.js";
 
 const messages = {
   [ERROR_CODES.INVALID_DISPLAY_NAME]: "Enter a valid display name of 20 characters or fewer.",
@@ -16,6 +17,7 @@ const messages = {
   [ERROR_CODES.NOT_HOST]: "Only the host can remove a player.",
   [ERROR_CODES.CANNOT_KICK_SELF]: "Use Leave Room to remove yourself.",
   [ERROR_CODES.PLAYER_NOT_FOUND]: "That player could not be found.",
+  INVALID_GAME_ID: "Choose a known game.",
 };
 const failure = (code) => ({ ok: false, error: { code, message: messages[code] } });
 const safeEqual = (first, second) => {
@@ -43,14 +45,16 @@ export class RoomManager {
     this.random = random; this.createId = createId; this.createToken = createToken; this.graceMs = graceMs; this.onExpire = onExpire; this.onBeforeRemove = onBeforeRemove;
   }
 
-  createRoom({ displayName, socketId }) {
+  createRoom({ displayName, socketId, gameId = "president" }) {
     if (this.socketControls.has(socketId)) return failure(ERROR_CODES.ROOM_NOT_JOINABLE);
     const name = normaliseDisplayName(displayName);
     if (!name) return failure(ERROR_CODES.INVALID_DISPLAY_NAME);
+    const game = getGameById(gameId);
+    if (!game || game.status !== "available") return failure("INVALID_GAME_ID");
     const code = generateRoomCode({ exists: (candidate) => this.rooms.has(candidate), random: this.random });
     const player = this.#createPlayer(name, socketId);
     const timestamp = this.now();
-    const room = { code, status: ROOM_STATUS.LOBBY, hostPlayerId: player.id, createdAt: timestamp, updatedAt: timestamp, players: [player] };
+    const room = { code, gameId: game.id, status: ROOM_STATUS.LOBBY, hostPlayerId: player.id, createdAt: timestamp, updatedAt: timestamp, players: [player] };
     this.rooms.set(code, room); this.socketControls.set(socketId, { code, playerId: player.id });
     return this.#success(room, player);
   }

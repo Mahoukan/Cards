@@ -64,6 +64,15 @@ Record device, OS/browser version, deployment version, network, result, and scre
 - [ ] Pass, timeout, and current-player removal consume a targeted ten override
 - [ ] Joker and legal 2 clears remove Consecutive, direction, and sequence indicators
 - [ ] Refresh/reconnect preserves a pending override, Consecutive indicator, and unchanged deadline
+- [ ] Create President and Crazy Eights from separate home cards; join-by-code routes to the stored game
+- [ ] Crazy Eights at 320px keeps top card, active suit, timer, hand, and controls reachable without horizontal page scroll
+- [ ] Crazy Eights opponents show card counts but never card faces
+- [ ] Selecting a different card replaces selection; unplayable cards remain identifiable
+- [ ] An 8 requires one visibly selected suit choice using text and symbol
+- [ ] A playable draw enables only Play Drawn Card and Keep Card; an unplayable draw advances automatically
+- [ ] Crazy Eights timeout draws and keeps at most one card, advances once, and shows a public message
+- [ ] Refresh during normal and drawn-card-decision turns restores the hand and unchanged deadline
+- [ ] Winner, remaining counts, readiness list, and fresh replay deal render correctly
 - [ ] Host kick and host migration
 - [ ] Session replacement
 - [ ] Leaving during exchange

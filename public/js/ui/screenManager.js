@@ -1,4 +1,4 @@
-const VALID_SCREENS = new Set(["home", "create", "join", "lobby", "game", "exchange", "results"]);
+const VALID_SCREENS = new Set(["home", "create", "join", "lobby", "game", "exchange", "results", "crazy-eights-game", "crazy-eights-results"]);
 
 export const normaliseScreen = (value) => VALID_SCREENS.has(value) ? value : "home";
 
@@ -15,7 +15,8 @@ export const createScreenManager = ({ onChange = () => {} } = {}) => {
     });
     current = next;
     document.body.dataset.screen = next;
-    document.title = next === "home" ? "Card Table" : `${next[0].toUpperCase()}${next.slice(1)} · President`;
+    const gameName = next.startsWith("crazy-eights") ? "Crazy Eights" : "President";
+    document.title = next === "home" ? "Card Table" : `${gameName} · Card Table`;
     if (updateHistory) {
       const url = new URL(window.location.href);
       url.searchParams.set("screen", next);

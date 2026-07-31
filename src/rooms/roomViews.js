@@ -1,4 +1,5 @@
 import { MAXIMUM_PLAYERS, MINIMUM_PLAYERS, ROOM_STATUS } from "./constants.js";
+import { getGameById } from "../../public/js/games/gameCatalog.js";
 
 export const canRoomStart = (room) =>
   room.status === ROOM_STATUS.LOBBY &&
@@ -12,6 +13,9 @@ export const canPrepareNextRound = (room) =>
 
 export const createPublicRoomView = (room) => ({
   code: room.code,
+  gameId: room.gameId ?? "president",
+  gameName: getGameById(room.gameId ?? "president")?.name ?? "President",
+  gameDescription: getGameById(room.gameId ?? "president")?.description ?? "",
   status: room.status,
   hostPlayerId: room.hostPlayerId,
   playerCount: room.players.length,

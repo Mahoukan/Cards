@@ -65,6 +65,14 @@ The browser uses shared selectable-hand layout headroom equal to the card lift d
 
 All active state is in memory and disappears after server restart or redeployment.
 
+## Multiple game routing
+
+Every room stores an immutable catalog `gameId`. Creation validates it; joining by code reads it from the room. A thin server router sends readiness, removal, replay, resume views, and publishing to either the established President coordinator or the dedicated Crazy Eights coordinator.
+
+Crazy Eights uses guarded `crazy-eights:play`, `crazy-eights:draw`, and `crazy-eights:keep-drawn` actions. Its personalised view exposes only the controlled hand plus public card counts, top discard, active suit, pile counts, deadline, action, and results. A playable draw creates a private drawn-card decision and retains the deadline; playing it or keeping it advances and starts one new timer.
+
+Reconnect restores the room-selected screen, private hand, decision state, and existing deadline. Expired or removed players have their cards shuffled back into the draw pile; no President roles or exchanges are applied. Completion records a winner and remaining counts, and unanimous next-round readiness starts a fresh deal.
+
 ## Player instructions
 
 The reusable serialisable catalog at `public/js/games/instructions.js` owns President's player-facing instructions under the stable `president` ID. One accessible modal renders that catalog from the home, lobby, active-game menu, exchange, results, and demo versions of those screens. `/?instructions=president` is the safe direct route; invalid IDs are ignored. Opening it does not navigate, mutate the session, or interrupt incoming views, and the authoritative timer continues.

@@ -2,12 +2,15 @@ import { createDemoController, normaliseRoomCode, validateDisplayName } from "./
 import { createDemoState } from "./demo/demoState.js";
 import { createExchangeClient } from "./network/exchangeClient.js";
 import { createGameClient } from "./network/gameClient.js";
+import { createCrazyEightsClient } from "./network/crazyEightsClient.js";
 import { createRoomClient } from "./network/roomClient.js";
 import { clearRoomSession, readRoomSession, saveRoomSession } from "./network/sessionStorage.js";
 import { createExchangeRenderer } from "./ui/exchangeRenderer.js";
 import { createGameRenderer } from "./ui/gameRenderer.js";
 import { createLobbyRenderer } from "./ui/lobbyRenderer.js";
 import { createResultsRenderer } from "./ui/resultsRenderer.js";
+import { createCrazyEightsRenderer } from "./ui/crazyEightsRenderer.js";
+import { createCrazyEightsResultsRenderer } from "./ui/crazyEightsResultsRenderer.js";
 import { createScreenManager, normaliseScreen } from "./ui/screenManager.js";
 import { createInstructionsDialog, getGameInstructions } from "./games/instructions.js";
 import { GAME_CATALOG } from "./games/gameCatalog.js";
@@ -39,12 +42,16 @@ const socket = typeof window.io === "function" ? window.io() : null;
 const roomClient = socket ? createRoomClient(socket) : null;
 const gameClient = socket ? createGameClient(socket) : null;
 const exchangeClient = socket ? createExchangeClient(socket) : null;
+const crazyEightsClient = socket ? createCrazyEightsClient(socket) : null;
 let activeSession = demoMode ? null : readRoomSession();
+let selectedGameId = "president";
 let demoController;
 let lobbyRenderer;
 let gameRenderer;
 let resultsRenderer;
 let exchangeRenderer;
+let crazyEightsRenderer;
+let crazyEightsResultsRenderer;
 let resumeAttempt = 0;
 
 const manager = createScreenManager({
@@ -53,6 +60,8 @@ const manager = createScreenManager({
     else {
       if (screen === "game") gameRenderer?.startTimer();
       else gameRenderer?.stopTimer();
+      if (screen === "crazy-eights-game") crazyEightsRenderer?.startTimer();
+      else crazyEightsRenderer?.stopTimer();
       if (screen === "game") exchangeRenderer?.clearSelection();
       if (screen === "exchange") gameRenderer?.clearSelection();
       if (screen === "lobby" && (!activeSession || !roomClient?.room)) {
@@ -66,7 +75,8 @@ const manager = createScreenManager({
 const returnHome = (message, { clearStored = true } = {}) => {
   if (clearStored) clearRoomSession();
   activeSession = null;
-  roomClient?.clear(); gameClient?.clear(); exchangeClient?.clear(); lobbyRenderer?.clear(); gameRenderer?.stopTimer();
+  roomClient?.clear(); gameClient?.clear(); exchangeClient?.clear(); crazyEightsClient?.clear();
+  lobbyRenderer?.clear(); gameRenderer?.stopTimer(); crazyEightsRenderer?.stopTimer();
   setHomeMessage(message); manager.show("home");
 };
 const handleResponseError = (response, target = "home-message") => {
@@ -79,14 +89,17 @@ if (demoMode) {
   byId("leave-button").addEventListener("click", () => manager.show("home"));
   byId("game-leave-button").addEventListener("click", () => manager.show("home"));
   byId("results-leave-button").addEventListener("click", () => manager.show("home"));
-} else if (roomClient && gameClient && exchangeClient) {
+} else if (roomClient && gameClient && exchangeClient && crazyEightsClient) {
   const leaveRealRoom = async (requiresConfirmation = false) => {
     if (requiresConfirmation && !window.confirm("Leaving will forfeit this round. Continue?")) return;
     gameRenderer.setBusy(true); exchangeRenderer?.setBusy(true); resultsRenderer?.setBusy(true);
+    crazyEightsRenderer?.setBusy(true); crazyEightsResultsRenderer?.setBusy(true);
     const response = await roomClient.leave();
     if (response.ok) returnHome(requiresConfirmation ? "You left the room and forfeited the round." : "You left the room.");
     gameRenderer.setBusy(false); exchangeRenderer?.setBusy(false); resultsRenderer?.setBusy(false);
-    byId("game-notice").textContent = response.error?.message ?? "Unable to leave the room.";
+    crazyEightsRenderer?.setBusy(false); crazyEightsResultsRenderer?.setBusy(false);
+    byId(roomClient.room?.gameId === "crazy-eights" ? "ce-notice" : "game-notice").textContent =
+      response.error?.message ?? "Unable to leave the room.";
   };
 
   gameRenderer = createGameRenderer({
@@ -96,6 +109,18 @@ if (demoMode) {
       const response = await roomClient.kick(playerId);
       if (!response.ok) byId("game-notice").textContent = response.error?.message ?? "Unable to remove that player.";
     },
+    onLeave: leaveRealRoom,
+  });
+  crazyEightsRenderer = createCrazyEightsRenderer({
+    onPlay: (cardId, chosenSuit) => crazyEightsClient.play(cardId, chosenSuit),
+    onDraw: () => crazyEightsClient.draw(),
+    onKeep: () => crazyEightsClient.keepDrawn(),
+    onKick: (playerId) => roomClient.kick(playerId),
+    onLeave: leaveRealRoom,
+  });
+  crazyEightsResultsRenderer = createCrazyEightsResultsRenderer({
+    onReady: (ready) => roomClient.setNextRoundReady(ready),
+    onKick: (playerId) => roomClient.kick(playerId),
     onLeave: leaveRealRoom,
   });
   exchangeRenderer = createExchangeRenderer({
@@ -141,23 +166,29 @@ if (demoMode) {
   roomClient.on("update", (room) => {
     if (!activeSession || room.code !== activeSession.roomCode) return;
     if (room.status === "lobby") lobbyRenderer.update(room, activeSession.playerId);
-    if (room.status === "round_complete") resultsRenderer.updateRoom(room);
+    if (room.status === "round_complete") {
+      if (room.gameId === "crazy-eights") crazyEightsResultsRenderer.updateRoom(room);
+      else resultsRenderer.updateRoom(room);
+    }
   });
   roomClient.on("ready", (room) => {
     if (activeSession && room.status === "lobby") lobbyRenderer.update(room, activeSession.playerId);
   });
   roomClient.on("disconnect", () => {
     resumeAttempt += 1;
+    crazyEightsRenderer.setConnected(false); crazyEightsResultsRenderer.setConnected(false);
     updateConnection("Reconnecting…", "reconnecting");
     lobbyRenderer.setConnected(false); gameRenderer.setConnected(false); exchangeRenderer.setConnected(false); resultsRenderer.setConnected(false);
   });
   roomClient.on("connect", async () => {
     if (!activeSession) {
+      crazyEightsRenderer.setConnected(true); crazyEightsResultsRenderer.setConnected(true);
       updateConnection("Connected", "connected");
       lobbyRenderer.setConnected(true); gameRenderer.setConnected(true); exchangeRenderer.setConnected(true); resultsRenderer.setConnected(true);
       return;
     }
     const attempt = ++resumeAttempt;
+    crazyEightsRenderer.setConnected(false); crazyEightsResultsRenderer.setConnected(false);
     updateConnection("Restoring session…", "resuming");
     lobbyRenderer.setConnected(false); gameRenderer.setConnected(false); exchangeRenderer.setConnected(false); resultsRenderer.setConnected(false);
     const response = await roomClient.resume(activeSession);
@@ -171,15 +202,17 @@ if (demoMode) {
       return;
     }
     activeSession = response.session; saveRoomSession(activeSession);
+    crazyEightsRenderer.setConnected(true); crazyEightsResultsRenderer.setConnected(true);
     updateConnection("Connected", "connected");
     lobbyRenderer.setConnected(true); gameRenderer.setConnected(true); exchangeRenderer.setConnected(true); resultsRenderer.setConnected(true);
     if (response.game) gameClient.accept(response.game);
     if (response.exchange) exchangeClient.accept(response.exchange);
+    if (response.crazyEights) crazyEightsClient.accept(response.crazyEights);
     if (response.room.status === "lobby") {
       lobbyRenderer.update(response.room, activeSession.playerId); manager.show("lobby");
-    } else if (response.room.status === "playing") manager.show("game");
+    } else if (response.room.status === "playing") manager.show(response.room.gameId === "crazy-eights" ? "crazy-eights-game" : "game");
     else if (response.room.status === "exchange") manager.show("exchange");
-    else if (response.room.status === "round_complete") manager.show("results");
+    else if (response.room.status === "round_complete") manager.show(response.room.gameId === "crazy-eights" ? "crazy-eights-results" : "results");
   });
   roomClient.on("kicked", () => returnHome("The host removed you from the room."));
   roomClient.on("replaced", () => returnHome("This room was opened in another tab.", { clearStored: false }));
@@ -195,6 +228,14 @@ if (demoMode) {
     exchangeRenderer.update(view);
     manager.show("exchange");
   });
+  crazyEightsClient.onUpdate((view) => {
+    if (!activeSession || view.roomCode !== activeSession.roomCode) return;
+    crazyEightsRenderer.update(view);
+    if (view.roomStatus === "round_complete") {
+      crazyEightsResultsRenderer.update(view, roomClient.room);
+      manager.show("crazy-eights-results");
+    } else manager.show("crazy-eights-game");
+  });
   socket.on("connect_error", () => updateConnection(navigator.onLine ? "Reconnecting…" : "Offline", navigator.onLine ? "reconnecting" : "offline"));
 } else updateConnection("Disconnected", "disconnected");
 
@@ -208,7 +249,11 @@ document.addEventListener("click", (event) => {
   }
   const link = event.target.closest("[data-go]");
   if (!link) return;
-  if (!demoMode && ["game", "exchange", "results", "lobby"].includes(link.dataset.go)) return;
+  if (link.dataset.gameId) {
+    selectedGameId = link.dataset.gameId;
+    byId("create-title").textContent = `Create a ${selectedGameId === "crazy-eights" ? "Crazy Eights" : "President"} room`;
+  }
+  if (!demoMode && ["game", "exchange", "results", "lobby", "crazy-eights-game", "crazy-eights-results"].includes(link.dataset.go)) return;
   manager.show(link.dataset.go);
 });
 
@@ -229,7 +274,7 @@ const bindForm = (formId, errorId, mode) => {
     }
     if (!roomClient?.connected) { error.textContent = "Connect to the server before using room controls."; return; }
     error.textContent = ""; submit.disabled = true; submit.textContent = mode === "create" ? "Creating…" : "Joining…";
-    const response = mode === "create" ? await roomClient.create(name.value) : await roomClient.join(name.value, code);
+    const response = mode === "create" ? await roomClient.create(name.value, selectedGameId) : await roomClient.join(name.value, code);
     submit.disabled = false; submit.textContent = mode === "create" ? "Create Room" : "Join Room";
     if (!response.ok) { handleResponseError(response, errorId); return; }
     activeSession = response.session; saveRoomSession(activeSession);
@@ -266,7 +311,7 @@ if (sharedCode && !demoMode) {
   roomInput.value = sharedCode; manager.show("join", { updateHistory: false });
 } else {
   let initial = normaliseScreen(params.get("screen"));
-  if (!demoMode && ["game", "exchange", "results", "lobby"].includes(initial)) initial = "home";
+  if (!demoMode && ["game", "exchange", "results", "lobby", "crazy-eights-game", "crazy-eights-results"].includes(initial)) initial = "home";
   manager.show(initial, { updateHistory: false });
 }
 if (getGameInstructions(requestedInstructions)) {

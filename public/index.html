@@ -20,20 +20,19 @@
               <p data-game-description></p>
               <p class="game-player-count" data-game-players></p>
               <div class="stack">
-                <button class="button button-primary" type="button" data-go="create">Create President Room</button>
+                <button class="button button-primary" type="button" data-go="create" data-game-id="president">Create President Room</button>
                 <button class="button button-secondary" type="button" data-go="join">Join President Room</button>
                 <button class="button button-quiet" type="button" data-instructions="president">How to Play</button>
               </div>
             </article>
             <article class="game-choice" data-game-card="crazy-eights">
-              <div class="game-choice-heading"><h2 data-game-name></h2><span class="game-status is-development" data-game-status></span></div>
+              <div class="game-choice-heading"><h2 data-game-name></h2><span class="game-status is-available" data-game-status></span></div>
               <p data-game-description></p>
               <p class="game-player-count" data-game-players></p>
               <div class="stack">
-                <button class="button button-secondary" type="button" disabled aria-describedby="crazy-eights-status">Multiplayer coming soon</button>
+                <button class="button button-primary" type="button" data-go="create" data-game-id="crazy-eights">Create Crazy Eights Room</button>
                 <button class="button button-quiet" type="button" data-instructions="crazy-eights">How to Play</button>
               </div>
-              <p id="crazy-eights-status" class="visually-hidden">Crazy Eights multiplayer rooms are in development.</p>
             </article>
           </div>
           <p class="connection-status" data-connection data-state="disconnected" role="status" aria-live="polite">Disconnected</p>
@@ -81,10 +80,12 @@
         <p id="copy-message" class="toast-space" aria-live="polite"></p>
         <div class="panel lobby-panel">
           <div class="section-heading"><h3>Players</h3><span id="player-count">4 / 6</span></div>
+          <p class="eyebrow" id="lobby-game-name">President</p>
+          <p class="muted" id="lobby-game-description"></p>
           <ul id="player-list" class="player-list"></ul>
           <p id="lobby-status" class="callout" aria-live="polite">At least two connected players must be ready. The game starts automatically.</p>
           <button class="button button-primary" id="ready-button" type="button" aria-pressed="false">I’m Ready</button>
-          <button class="button button-secondary" type="button" data-instructions="president">How to Play</button>
+          <button class="button button-secondary" id="lobby-how-to-play" type="button" data-instructions="president">How to Play</button>
           <button class="button button-quiet" id="leave-button" type="button">Leave Room</button>
         </div>
       </section>
@@ -139,6 +140,55 @@
           <button class="button button-quiet" id="game-leave-button" type="button">Leave Game</button>
           <button class="button button-primary" id="close-menu" type="button">Close Menu</button>
         </dialog>
+      </section>
+
+      <section class="screen game-screen ce-game-screen" data-screen="crazy-eights-game" aria-labelledby="ce-game-heading" hidden>
+        <header class="game-header">
+          <div><span class="room-chip">Room <strong data-room-code>ABCD</strong></span><span id="ce-round" class="round-label">Round 1</span></div>
+          <div class="header-actions"><span class="connection-status compact" data-connection data-state="disconnected">Disconnected</span><button class="icon-button" type="button" data-instructions="crazy-eights">How to Play</button></div>
+        </header>
+        <h2 id="ce-game-heading" class="visually-hidden">Crazy Eights game</h2>
+        <div id="ce-opponents" class="opponents" aria-label="Other players"></div>
+        <section class="ce-table" aria-labelledby="ce-pile-heading">
+          <div><p class="eyebrow" id="ce-pile-heading">Top card</p><div id="ce-top-card" class="pile-cards"></div></div>
+          <div class="ce-suit-panel"><span>Active suit</span><strong id="ce-active-suit"></strong><small><span id="ce-draw-count"></span> in draw pile · <span id="ce-discard-count"></span> discarded</small></div>
+        </section>
+        <section class="turn-panel"><strong id="ce-turn-message">Your turn</strong><span class="timer" id="ce-timer">0:30</span></section>
+        <p id="ce-notice" class="game-notice" role="status" aria-live="polite"></p>
+        <section id="ce-suit-chooser" class="ce-suit-chooser" aria-label="Choose the active suit" hidden>
+          <p>Choose the active suit:</p>
+          <div>
+            <button type="button" data-ce-suit="clubs" aria-pressed="false">Clubs ♣</button>
+            <button type="button" data-ce-suit="diamonds" aria-pressed="false">Diamonds ♦</button>
+            <button type="button" data-ce-suit="hearts" aria-pressed="false">Hearts ♥</button>
+            <button type="button" data-ce-suit="spades" aria-pressed="false">Spades ♠</button>
+          </div>
+        </section>
+        <p id="ce-decision" class="callout" hidden>Only the newly drawn card may be played. Play it now or keep it and end your turn.</p>
+        <section class="hand-area" aria-labelledby="ce-hand-heading">
+          <div class="section-heading"><h3 id="ce-hand-heading">Your hand</h3><span id="ce-hand-count"></span></div>
+          <div id="ce-hand" class="hand" role="group" aria-label="Your cards"></div>
+        </section>
+        <div class="ce-controls">
+          <button class="button button-secondary" id="ce-draw" type="button">Draw</button>
+          <button class="button button-secondary" id="ce-keep" type="button" disabled>Keep Card</button>
+          <button class="button button-primary" id="ce-play" type="button" disabled>Play Card</button>
+          <button class="button button-quiet" id="ce-leave" type="button">Leave Room</button>
+        </div>
+      </section>
+
+      <section class="screen results-screen" data-screen="crazy-eights-results" aria-labelledby="ce-results-title" hidden>
+        <header class="result-hero"><p id="ce-results-round" class="eyebrow">Round 1</p><h2 id="ce-results-title">Round complete</h2><p>Ready for another round?</p></header>
+        <div class="panel">
+          <ol id="ce-results-list" class="results-list"></ol>
+          <h3>Ready for another round</h3>
+          <ul id="ce-ready-list" class="player-list"></ul>
+          <div class="stack">
+            <button class="button button-primary" id="ce-next-ready" type="button" aria-pressed="false">Ready for another round</button>
+            <button class="button button-secondary" type="button" data-instructions="crazy-eights">How to Play</button>
+            <button class="button button-quiet" id="ce-results-leave" type="button">Leave Room</button>
+          </div>
+        </div>
       </section>
 
       <section class="screen exchange-screen" data-screen="exchange" aria-labelledby="exchange-title" hidden>

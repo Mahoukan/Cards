@@ -13,7 +13,7 @@ export const GAME_CATALOG = Object.freeze([
     description: "Match the suit or rank and use eights to change suit.",
     minimumPlayers: 2,
     maximumPlayers: 6,
-    status: "in-development",
+    status: "available",
   }),
 ]);
 

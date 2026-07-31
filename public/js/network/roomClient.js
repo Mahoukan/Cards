@@ -27,8 +27,8 @@ export const createRoomClient = (socket, options) => {
       listeners.get(event).add(listener);
       return () => listeners.get(event)?.delete(listener);
     },
-    async create(displayName) {
-      const response = await authenticatedRequest("room:create", { displayName });
+    async create(displayName, gameId = "president") {
+      const response = await authenticatedRequest("room:create", { displayName, gameId });
       if (response.ok) session = response.session;
       return response;
     },
