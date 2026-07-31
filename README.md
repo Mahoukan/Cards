@@ -1,10 +1,11 @@
 # Card Table
 
-President and Crazy Eights remain playable. Mahjong is **In Development** with
+President, Crazy Eights, and Mahjong are playable in private rooms. Mahjong has
 an isolated 144-tile model, live/dead walls, initial dealing and bonus
 replacement, winning-hand solvers, claim/wait candidates, simplified fan
 scoring, payments, declaration evaluation, instructions, and a responsive
-local scoring demo. It cannot create a live room. Open
+live table with authoritative turns, timed claims, Kongs, reconnect, round
+payments, dealer rotation, and one-rotation matches. Open
 `/?demo=1&game=mahjong&screen=game`; see `docs/MAHJONG_RULES.md`,
 `docs/MAHJONG_SCORING.md`, and `docs/MAHJONG_ASSETS.md`.
 

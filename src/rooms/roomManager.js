@@ -68,7 +68,8 @@ export class RoomManager {
     const room = this.rooms.get(code);
     if (!room) return failure(ERROR_CODES.ROOM_NOT_FOUND);
     if (room.status !== ROOM_STATUS.LOBBY) return failure(ERROR_CODES.ROOM_NOT_JOINABLE);
-    if (room.players.length >= MAXIMUM_PLAYERS) return failure(ERROR_CODES.ROOM_FULL);
+    const maximumPlayers = getGameById(room.gameId)?.maximumPlayers ?? MAXIMUM_PLAYERS;
+    if (room.players.length >= maximumPlayers) return failure(ERROR_CODES.ROOM_FULL);
     if (room.players.some((player) => namesMatch(player.name, name))) return failure(ERROR_CODES.DISPLAY_NAME_TAKEN);
     const player = this.#createPlayer(name, socketId);
     room.players.push(player); this.#touch(room);

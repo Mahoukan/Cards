@@ -11,6 +11,7 @@ import { RoomManager, registerRoomSocketHandlers } from "./src/rooms/index.js";
 import { GameCoordinator, registerGameSocketHandlers } from "./src/game/index.js";
 import { CrazyEightsCoordinator, registerCrazyEightsSocketHandlers } from "./src/games/crazyEights/index.js";
 import { createMahjongScoringDemo } from "./src/games/mahjong/demoScenarios.js";
+import { MahjongCoordinator, registerMahjongSocketHandlers } from "./src/games/mahjong/index.js";
 
 export const createApplication = ({
   config = createConfig(),
@@ -32,6 +33,7 @@ export const createApplication = ({
   const roomManager = new RoomManager({ graceMs: config.roomReconnectGraceMs });
   const gameCoordinator = new GameCoordinator({ roomManager, turnDurationMs: config.turnDurationMs, logger });
   const crazyEightsCoordinator = new CrazyEightsCoordinator({ roomManager, turnDurationMs: config.turnDurationMs });
+  const mahjongCoordinator = new MahjongCoordinator({ roomManager, turnDurationMs: config.turnDurationMs, logger });
   let ready = false;
   let shutdownPromise = null;
   let forceTimer = null;
@@ -46,36 +48,41 @@ export const createApplication = ({
 
   const presidentSockets = registerGameSocketHandlers(io, roomManager, gameCoordinator, { limiter, logger });
   const crazyEightsSockets = registerCrazyEightsSocketHandlers(io, roomManager, crazyEightsCoordinator, { limiter, logger });
+  const mahjongSockets = registerMahjongSocketHandlers(io, roomManager, mahjongCoordinator, { limiter, logger });
   const coordinatorRouter = {
     maybeStart(roomCode) {
       const room = roomManager.getRoom(roomCode);
-      return room?.gameId === "crazy-eights"
-        ? crazyEightsCoordinator.maybeStart(roomCode)
-        : gameCoordinator.maybeStart(roomCode);
+      if (room?.gameId === "crazy-eights") return crazyEightsCoordinator.maybeStart(roomCode);
+      if (room?.gameId === "mahjong") return mahjongCoordinator.maybeStart(roomCode);
+      return gameCoordinator.maybeStart(roomCode);
     },
     beforePlayerRemoval(room, player) {
-      return room.gameId === "crazy-eights"
-        ? crazyEightsCoordinator.beforePlayerRemoval(room, player)
-        : gameCoordinator.beforePlayerRemoval(room, player);
+      if (room.gameId === "crazy-eights") return crazyEightsCoordinator.beforePlayerRemoval(room, player);
+      if (room.gameId === "mahjong") return mahjongCoordinator.beforePlayerRemoval(room, player);
+      return gameCoordinator.beforePlayerRemoval(room, player);
     },
     setNextRoundReady(socketId, ready) {
       const control = roomManager.getControl(socketId);
       const room = control ? roomManager.getRoom(control.code) : null;
-      return room?.gameId === "crazy-eights"
-        ? crazyEightsCoordinator.setNextRoundReady(socketId, ready)
-        : gameCoordinator.setNextRoundReady(socketId, ready);
+      if (room?.gameId === "crazy-eights") return crazyEightsCoordinator.setNextRoundReady(socketId, ready);
+      if (room?.gameId === "mahjong") return mahjongCoordinator.setNextRoundReady(socketId, ready);
+      return gameCoordinator.setNextRoundReady(socketId, ready);
     },
     getView: (roomCode, playerId) => gameCoordinator.getView(roomCode, playerId),
     getCrazyEightsView: (roomCode, playerId) => crazyEightsCoordinator.getView(roomCode, playerId),
+    getMahjongView: (roomCode, playerId) => mahjongCoordinator.getView(roomCode, playerId),
     getExchangeView: (roomCode, playerId) => gameCoordinator.getExchangeView(roomCode, playerId),
     deleteRoom(roomCode) {
       gameCoordinator.deleteRoom(roomCode);
       crazyEightsCoordinator.deleteRoom(roomCode);
+      mahjongCoordinator.deleteRoom(roomCode);
     },
   };
   const publish = (roomCode) => roomManager.getRoom(roomCode)?.gameId === "crazy-eights"
     ? crazyEightsSockets.publish(roomCode)
-    : presidentSockets.publish(roomCode);
+    : roomManager.getRoom(roomCode)?.gameId === "mahjong"
+      ? mahjongSockets.publish(roomCode)
+      : presidentSockets.publish(roomCode);
   registerRoomSocketHandlers(io, roomManager, coordinatorRouter, publish, { limiter, logger });
   io.on("connection", (socket) => {
     logger.info("socket_connected", { socketId: socket.id, address: socket.handshake.address });
@@ -103,6 +110,7 @@ export const createApplication = ({
       roomManager.clear();
       gameCoordinator.clear();
       crazyEightsCoordinator.clear();
+      mahjongCoordinator.clear();
       limiter.clearAll();
       io.close(() => {
         const finish = () => {
@@ -129,7 +137,7 @@ export const createApplication = ({
     process.once("SIGINT", () => shutdownFromSignal("SIGINT"));
     process.once("SIGTERM", () => shutdownFromSignal("SIGTERM"));
   }
-  return { app, httpServer, io, roomManager, gameCoordinator, crazyEightsCoordinator, limiter, start, stop, get ready() { return ready; } };
+  return { app, httpServer, io, roomManager, gameCoordinator, crazyEightsCoordinator, mahjongCoordinator, limiter, start, stop, get ready() { return ready; } };
 };
 
 const isEntrypoint = process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;

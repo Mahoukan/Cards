@@ -3,6 +3,7 @@ import { createDemoState } from "./demo/demoState.js";
 import { createExchangeClient } from "./network/exchangeClient.js";
 import { createGameClient } from "./network/gameClient.js";
 import { createCrazyEightsClient } from "./network/crazyEightsClient.js";
+import { createMahjongClient } from "./network/mahjongClient.js";
 import { createRoomClient } from "./network/roomClient.js";
 import { clearRoomSession, readRoomSession, saveRoomSession } from "./network/sessionStorage.js";
 import { createExchangeRenderer } from "./ui/exchangeRenderer.js";
@@ -11,6 +12,7 @@ import { createLobbyRenderer } from "./ui/lobbyRenderer.js";
 import { createResultsRenderer } from "./ui/resultsRenderer.js";
 import { createCrazyEightsRenderer } from "./ui/crazyEightsRenderer.js";
 import { createCrazyEightsResultsRenderer } from "./ui/crazyEightsResultsRenderer.js";
+import { createMahjongRenderer } from "./ui/mahjongRenderer.js";
 import { createScreenManager, normaliseScreen } from "./ui/screenManager.js";
 import { createInstructionsDialog, getGameInstructions } from "./games/instructions.js";
 import { GAME_CATALOG, getGameById } from "./games/gameCatalog.js";
@@ -44,6 +46,7 @@ const roomClient = socket ? createRoomClient(socket) : null;
 const gameClient = socket ? createGameClient(socket) : null;
 const exchangeClient = socket ? createExchangeClient(socket) : null;
 const crazyEightsClient = socket ? createCrazyEightsClient(socket) : null;
+const mahjongClient = socket ? createMahjongClient(socket) : null;
 let activeSession = demoMode ? null : readRoomSession();
 let demoController;
 let lobbyRenderer;
@@ -52,6 +55,7 @@ let resultsRenderer;
 let exchangeRenderer;
 let crazyEightsRenderer;
 let crazyEightsResultsRenderer;
+let mahjongRenderer;
 let resumeAttempt = 0;
 
 const manager = createScreenManager({
@@ -62,6 +66,8 @@ const manager = createScreenManager({
       else gameRenderer?.stopTimer();
       if (screen === "crazy-eights-game") crazyEightsRenderer?.startTimer();
       else crazyEightsRenderer?.stopTimer();
+      if (screen === "mahjong-game") mahjongRenderer?.startTimer();
+      else mahjongRenderer?.stopTimer();
       if (screen === "game") exchangeRenderer?.clearSelection();
       if (screen === "exchange") gameRenderer?.clearSelection();
       if (screen === "lobby" && (!activeSession || !roomClient?.room)) {
@@ -75,8 +81,8 @@ const manager = createScreenManager({
 const returnHome = (message, { clearStored = true } = {}) => {
   if (clearStored) clearRoomSession();
   activeSession = null;
-  roomClient?.clear(); gameClient?.clear(); exchangeClient?.clear(); crazyEightsClient?.clear();
-  lobbyRenderer?.clear(); gameRenderer?.stopTimer(); crazyEightsRenderer?.stopTimer();
+  roomClient?.clear(); gameClient?.clear(); exchangeClient?.clear(); crazyEightsClient?.clear(); mahjongClient?.clear();
+  lobbyRenderer?.clear(); gameRenderer?.stopTimer(); crazyEightsRenderer?.stopTimer(); mahjongRenderer?.stopTimer();
   setHomeMessage(message); manager.show("home");
 };
 const handleResponseError = (response, target = "home-message") => {
@@ -89,15 +95,17 @@ if (demoMode) {
   byId("leave-button").addEventListener("click", () => manager.show("home"));
   byId("game-leave-button").addEventListener("click", () => manager.show("home"));
   byId("results-leave-button").addEventListener("click", () => manager.show("home"));
-} else if (roomClient && gameClient && exchangeClient && crazyEightsClient) {
+} else if (roomClient && gameClient && exchangeClient && crazyEightsClient && mahjongClient) {
   const leaveRealRoom = async (requiresConfirmation = false) => {
     if (requiresConfirmation && !window.confirm("Leaving will forfeit this round. Continue?")) return;
     gameRenderer.setBusy(true); exchangeRenderer?.setBusy(true); resultsRenderer?.setBusy(true);
     crazyEightsRenderer?.setBusy(true); crazyEightsResultsRenderer?.setBusy(true);
+    mahjongRenderer?.setBusy(true);
     const response = await roomClient.leave();
     if (response.ok) returnHome(requiresConfirmation ? "You left the room and forfeited the round." : "You left the room.");
     gameRenderer.setBusy(false); exchangeRenderer?.setBusy(false); resultsRenderer?.setBusy(false);
     crazyEightsRenderer?.setBusy(false); crazyEightsResultsRenderer?.setBusy(false);
+    mahjongRenderer?.setBusy(false);
     byId(roomClient.room?.gameId === "crazy-eights" ? "ce-notice" : "game-notice").textContent =
       response.error?.message ?? "Unable to leave the room.";
   };
@@ -122,6 +130,14 @@ if (demoMode) {
     onReady: (ready) => roomClient.setNextRoundReady(ready),
     onKick: (playerId) => roomClient.kick(playerId),
     onLeave: leaveRealRoom,
+  });
+  mahjongRenderer = createMahjongRenderer({
+    onDiscard: (tileId) => mahjongClient.discard(tileId),
+    onClaim: (type, tileIds) => mahjongClient.claim(type, tileIds),
+    onWin: () => mahjongClient.declareWin(),
+    onKong: (payload) => mahjongClient.declareKong(payload),
+    onReady: (ready) => roomClient.setNextRoundReady(ready),
+    onLeave: () => leaveRealRoom(true),
   });
   exchangeRenderer = createExchangeRenderer({
     onReturnCards: (cardIds) => exchangeClient.returnCards(cardIds),
@@ -168,7 +184,7 @@ if (demoMode) {
     if (room.status === "lobby") lobbyRenderer.update(room, activeSession.playerId);
     if (room.status === "round_complete") {
       if (room.gameId === "crazy-eights") crazyEightsResultsRenderer.updateRoom(room);
-      else resultsRenderer.updateRoom(room);
+      else if (room.gameId !== "mahjong") resultsRenderer.updateRoom(room);
     }
   });
   roomClient.on("ready", (room) => {
@@ -177,18 +193,21 @@ if (demoMode) {
   roomClient.on("disconnect", () => {
     resumeAttempt += 1;
     crazyEightsRenderer.setConnected(false); crazyEightsResultsRenderer.setConnected(false);
+    mahjongRenderer.setConnected(false);
     updateConnection("Reconnecting…", "reconnecting");
     lobbyRenderer.setConnected(false); gameRenderer.setConnected(false); exchangeRenderer.setConnected(false); resultsRenderer.setConnected(false);
   });
   roomClient.on("connect", async () => {
     if (!activeSession) {
       crazyEightsRenderer.setConnected(true); crazyEightsResultsRenderer.setConnected(true);
+      mahjongRenderer.setConnected(true);
       updateConnection("Connected", "connected");
       lobbyRenderer.setConnected(true); gameRenderer.setConnected(true); exchangeRenderer.setConnected(true); resultsRenderer.setConnected(true);
       return;
     }
     const attempt = ++resumeAttempt;
     crazyEightsRenderer.setConnected(false); crazyEightsResultsRenderer.setConnected(false);
+    mahjongRenderer.setConnected(false);
     updateConnection("Restoring session…", "resuming");
     lobbyRenderer.setConnected(false); gameRenderer.setConnected(false); exchangeRenderer.setConnected(false); resultsRenderer.setConnected(false);
     const response = await roomClient.resume(activeSession);
@@ -203,16 +222,18 @@ if (demoMode) {
     }
     activeSession = response.session; saveRoomSession(activeSession);
     crazyEightsRenderer.setConnected(true); crazyEightsResultsRenderer.setConnected(true);
+    mahjongRenderer.setConnected(true);
     updateConnection("Connected", "connected");
     lobbyRenderer.setConnected(true); gameRenderer.setConnected(true); exchangeRenderer.setConnected(true); resultsRenderer.setConnected(true);
     if (response.game) gameClient.accept(response.game);
     if (response.exchange) exchangeClient.accept(response.exchange);
     if (response.crazyEights) crazyEightsClient.accept(response.crazyEights);
+    if (response.mahjong) mahjongClient.accept(response.mahjong);
     if (response.room.status === "lobby") {
       lobbyRenderer.update(response.room, activeSession.playerId); manager.show("lobby");
-    } else if (response.room.status === "playing") manager.show(response.room.gameId === "crazy-eights" ? "crazy-eights-game" : "game");
+    } else if (response.room.status === "playing") manager.show(response.room.gameId === "crazy-eights" ? "crazy-eights-game" : response.room.gameId === "mahjong" ? "mahjong-game" : "game");
     else if (response.room.status === "exchange") manager.show("exchange");
-    else if (response.room.status === "round_complete") manager.show(response.room.gameId === "crazy-eights" ? "crazy-eights-results" : "results");
+    else if (response.room.status === "round_complete") manager.show(response.room.gameId === "crazy-eights" ? "crazy-eights-results" : response.room.gameId === "mahjong" ? "mahjong-game" : "results");
   });
   roomClient.on("kicked", () => returnHome("The host removed you from the room."));
   roomClient.on("replaced", () => returnHome("This room was opened in another tab.", { clearStored: false }));
@@ -236,6 +257,11 @@ if (demoMode) {
       manager.show("crazy-eights-results");
     } else manager.show("crazy-eights-game");
   });
+  mahjongClient.onUpdate((view) => {
+    if (!activeSession || view.roomCode !== activeSession.roomCode) return;
+    mahjongRenderer.update(view);
+    manager.show("mahjong-game");
+  });
   socket.on("connect_error", () => updateConnection(navigator.onLine ? "Reconnecting…" : "Offline", navigator.onLine ? "reconnecting" : "offline"));
 } else updateConnection("Disconnected", "disconnected");
 
@@ -249,7 +275,7 @@ document.addEventListener("click", (event) => {
   }
   const link = event.target.closest("[data-go]");
   if (!link) return;
-  if (!demoMode && ["game", "exchange", "results", "lobby", "crazy-eights-game", "crazy-eights-results"].includes(link.dataset.go)) return;
+  if (!demoMode && ["game", "exchange", "results", "lobby", "crazy-eights-game", "crazy-eights-results", "mahjong-game"].includes(link.dataset.go)) return;
   manager.show(link.dataset.go);
 });
 

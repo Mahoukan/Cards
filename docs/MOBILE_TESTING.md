@@ -14,6 +14,20 @@ structural validity, named fan items, total fan, 3-fan result, and payment
 deltas remain readable. Check that the selector and score lists do not create
 horizontal overflow at phone widths and that all 42 SVG faces still render.
 
+## Live Mahjong
+
+- [ ] Create and join a 2–4 player Mahjong room by code
+- [ ] Ready players receive stable East/South/West/North seats
+- [ ] Only the controlled concealed hand is visible
+- [ ] East opening discard and later automatic draws work
+- [ ] Turn and claim countdowns survive reconnect without restarting
+- [ ] Chow, Pung, all Kong types, and robbed Kong remain reachable
+- [ ] Bonus replacement never exposes the replacement tile
+- [ ] Timeout auto-discard opens exactly one claim window
+- [ ] Scoring, payments, dealer state, and replay readiness remain readable
+- [ ] At 320×568 and 390×844 the page and hand scroll independently without horizontal page overflow
+- [ ] At 1280×720 and 1440×900 major table sections do not overlap
+
 Record device, OS/browser version, deployment version, network, result, and screenshots for failures.
 
 ## Device and layout

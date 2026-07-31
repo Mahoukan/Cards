@@ -47,11 +47,11 @@ deltas are zero-sum.
 
 Declaration evaluation distinguishes incomplete structure, invalid counts,
 invalid exposed melds, impossible face counts, and a complete hand below the
-3-fan minimum. The provisional false-Mahjong policy is a current-round
-forfeit. Live multiplayer will later preserve other players where practical
-and apply any final point penalty only after user confirmation.
+3-fan minimum. The false-Mahjong policy is a current-round forfeit. Live play
+preserves the other active players where practical, keeps the reason private,
+and applies no additional point penalty.
 
 Scoring values are central immutable configuration and may be refined. Riichi,
 Dora, Furiten, Japanese Yaku, American card hands, jokers, generic Kong fan,
-multiple discard winners, and live penalty enforcement are intentionally
-excluded.
+multiple discard winners, and additional false-declaration penalties are
+intentionally excluded.

@@ -19,8 +19,8 @@ export const createPublicRoomView = (room) => ({
   status: room.status,
   hostPlayerId: room.hostPlayerId,
   playerCount: room.players.length,
-  minimumPlayers: MINIMUM_PLAYERS,
-  maximumPlayers: MAXIMUM_PLAYERS,
+  minimumPlayers: getGameById(room.gameId ?? "president")?.minimumPlayers ?? MINIMUM_PLAYERS,
+  maximumPlayers: getGameById(room.gameId ?? "president")?.maximumPlayers ?? MAXIMUM_PLAYERS,
   canStart: canRoomStart(room),
   nextRoundCanStart: canPrepareNextRound(room),
   players: room.players.map((player) => ({

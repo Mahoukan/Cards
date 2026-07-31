@@ -60,10 +60,10 @@
                 <label class="game-option" data-game-card="mahjong">
                   <input type="radio" name="gameId" value="mahjong">
                   <span class="game-option-copy">
-                    <span class="game-choice-heading"><strong data-game-name></strong><span class="game-status is-development" data-game-status></span></span>
+                    <span class="game-choice-heading"><strong data-game-name></strong><span class="game-status is-available" data-game-status></span></span>
                     <span class="game-player-count" data-game-players></span>
                     <span class="game-description" data-game-description></span>
-                    <span class="game-option-selection">In Development</span>
+                    <span class="game-option-selection">Selected</span>
                   </span>
                 </label>
               </div>
@@ -223,23 +223,25 @@
           <button class="button button-compact button-secondary" type="button" data-instructions="mahjong">How to Play</button>
         </header>
         <section class="mahjong-status" aria-label="Match status">
-          <span><strong>Dealer</strong> You (East)</span><span><strong>Prevailing wind</strong> East</span>
-          <span><strong>Live wall</strong> 74</span><span><strong>Dead wall</strong> 14</span>
+          <span><strong>Dealer</strong> <b id="mahjong-dealer">You (East)</b></span><span><strong>Prevailing wind</strong> <b id="mahjong-prevailing">East</b></span>
+          <span><strong>Live wall</strong> <b id="mahjong-live-count">74</b></span><span><strong>Dead wall</strong> <b id="mahjong-dead-count">14</b></span>
         </section>
-        <section class="mahjong-opponents" aria-label="Other players">
+        <section id="mahjong-opponents" class="mahjong-opponents" aria-label="Other players">
           <article><strong>Alex · South</strong><span>13 tiles · 1 bonus</span></article>
           <article><strong>Morgan · West</strong><span>13 tiles · Pung exposed</span></article>
           <article><strong>Jamie · North</strong><span>13 tiles · 2 bonuses</span></article>
         </section>
         <section class="mahjong-centre" aria-labelledby="mahjong-discards-heading">
           <div><p class="eyebrow" id="mahjong-discards-heading">Discards</p><div id="mahjong-discards" class="mahjong-tile-row wrap"></div></div>
-          <aside><strong>Recent discard</strong><span>Three of Bamboo</span><small>Claims close in 10 seconds</small></aside>
+          <aside><strong>Recent discard</strong><span id="mahjong-pending-label">None</span><small id="mahjong-deadline">Waiting for play</small></aside>
         </section>
-        <section class="mahjong-actions" aria-label="Claim actions">
-          <button type="button" class="button button-secondary">Chow</button><button type="button" class="button button-secondary">Pung</button>
-          <button type="button" class="button button-secondary">Kong</button><button type="button" class="button button-primary">Mahjong</button>
-          <button type="button" class="button button-secondary">Pass</button>
+        <p id="mahjong-notice" class="game-notice real-only" aria-live="polite"></p>
+        <section id="mahjong-claim-actions" class="mahjong-actions" aria-label="Claim actions">
+          <button id="mahjong-claim-chow" type="button" class="button button-secondary">Chow</button><button id="mahjong-claim-pung" type="button" class="button button-secondary">Pung</button>
+          <button id="mahjong-claim-kong" type="button" class="button button-secondary">Kong</button><button id="mahjong-claim-win" type="button" class="button button-primary">Mahjong</button>
+          <button id="mahjong-claim-pass" type="button" class="button button-secondary">Pass</button>
         </section>
+        <div id="mahjong-chow-options" class="mahjong-chow-options real-only"></div>
         <section class="mahjong-collections" aria-label="Your exposed tiles">
           <div><h3>Bonus tiles</h3><div id="mahjong-bonuses" class="mahjong-tile-row"></div></div>
           <div><h3>Chow</h3><div id="mahjong-chow" class="mahjong-tile-row"></div></div>
@@ -250,7 +252,7 @@
           <div class="section-heading"><h3 id="mahjong-hand-heading">Your hand · East</h3><span>14 playable tiles</span></div>
           <div id="mahjong-hand" class="mahjong-hand" role="group" aria-label="Your Mahjong tiles"></div>
         </section>
-        <section class="mahjong-scoring-panel" aria-labelledby="mahjong-scoring-heading">
+        <section class="mahjong-scoring-panel demo-only" aria-labelledby="mahjong-scoring-heading">
           <div class="section-heading">
             <div><p class="eyebrow">Development scoring inspector</p><h3 id="mahjong-scoring-heading">Winning-hand examples</h3></div>
             <label>Example
@@ -259,7 +261,15 @@
           </div>
           <div id="mahjong-score-output" aria-live="polite">Loading authoritative scoring examples…</div>
         </section>
-        <div class="mahjong-primary-actions"><button type="button" class="button button-primary">Discard selected tile</button></div>
+        <section id="mahjong-live-result" class="mahjong-scoring-panel real-only" hidden></section>
+        <div class="mahjong-primary-actions">
+          <button id="mahjong-sort" type="button" class="button button-secondary real-only">Sort</button>
+          <button id="mahjong-kong-action" type="button" class="button button-secondary real-only">Kong</button>
+          <button id="mahjong-win-action" type="button" class="button button-primary real-only">Mahjong</button>
+          <button id="mahjong-discard-action" type="button" class="button button-primary">Discard selected tile</button>
+          <button id="mahjong-next-ready" type="button" class="button button-primary real-only" hidden>Ready for next round</button>
+          <button id="mahjong-leave" type="button" class="button button-quiet real-only">Leave Room</button>
+        </div>
       </section>
 
       <section class="screen results-screen" data-screen="crazy-eights-results" aria-labelledby="ce-results-title" hidden>

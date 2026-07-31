@@ -30,3 +30,10 @@ Logs omit reconnect tokens, full hands/decks, and private exchange cards. Client
 Railway sends a termination signal during deployment. The service marks readiness unavailable, stops traffic, closes Socket.IO/HTTP, and clears its timers. Use Railway deployment history to select a known-good deployment and choose **Redeploy** for rollback.
 
 There is no database, Redis, or persistent filesystem state. Every restart, redeploy, crash, scale-to-zero event, or rollback ends active rooms and games. Graceful shutdown prevents hanging; it does not preserve games.
+# Mahjong runtime
+
+Mahjong uses the same in-memory room process and Socket.IO connection as the
+other games. No additional dependency or environment variable is required.
+Active rounds, points, dealer progress, walls, and reconnect seats are lost
+when the process restarts or Railway redeploys. Multiple application instances
+would require sticky sessions or a shared authoritative state store.

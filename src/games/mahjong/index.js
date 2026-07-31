@@ -8,3 +8,6 @@ export * from "./handSolver.js";
 export * from "./scoring.js";
 export * from "./payments.js";
 export * from "./validation.js";
+export * from "./views.js";
+export * from "./coordinator.js";
+export * from "./socketHandlers.js";

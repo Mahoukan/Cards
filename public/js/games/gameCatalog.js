@@ -23,7 +23,7 @@ export const GAME_CATALOG = Object.freeze([
     description: "Build four melds and a pair while claiming tiles and managing bonus tiles.",
     minimumPlayers: 2,
     maximumPlayers: 4,
-    status: "in-development",
+    status: "available",
     instructionsId: "mahjong",
   }),
 ]);

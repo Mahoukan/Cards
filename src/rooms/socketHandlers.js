@@ -75,6 +75,7 @@ export const registerRoomSocketHandlers = (io, roomManager, coordinator = null, 
             ...result,
             game: coordinator.getView(result.room.code, result.session.playerId),
             crazyEights: coordinator.getCrazyEightsView?.(result.room.code, result.session.playerId) ?? null,
+            mahjong: coordinator.getMahjongView?.(result.room.code, result.session.playerId) ?? null,
             exchange: coordinator.getExchangeView(result.room.code, result.session.playerId),
           }
         : result;

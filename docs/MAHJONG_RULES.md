@@ -1,4 +1,4 @@
-# Mahjong rules (In Development)
+# Mahjong rules
 
 Mahjong supports 2–4 players and always uses all 144 tiles: four copies of
 Characters 1–9, Dots 1–9, Bamboo 1–9, four winds and three dragons, plus one
@@ -46,8 +46,19 @@ no cap. Payments are `2 ^ fan`: only the responsible player pays a discard or
 robbed-Kong win, while every opponent pays a self-draw, replacement-tile, or
 last-live-tile win. See `MAHJONG_SCORING.md`.
 
-A false Mahjong declaration is evaluated authoritatively and provisionally
-suggests a current-round forfeit. It does not mutate a room or apply point
-penalties. Turn coordination, rooms, sockets, reconnect, timers, spectators,
-Riichi/Dora/Furiten/Yaku, betting, American cards, jokers, and multiple
-discard winners remain deferred.
+A false Mahjong declaration causes that player to forfeit the current round
+without an additional point penalty. The structured reason remains private.
+
+Live rooms use stable player order for initial seats and begin at 1000 points.
+East opens by discarding without drawing. Later turns automatically draw,
+replace bonus tiles from the dead wall, then allow an explicit Mahjong or Kong
+declaration before discard. Discards open a 10-second claim window. Priority is
+Mahjong, then Pung/Kong, then Chow; equal claims go clockwise from the
+discarder and only the next active player may Chow. Turn timeouts
+deterministically discard the last draw or rightmost sorted tile.
+
+East continues after an East win or draw. Otherwise East rotates clockwise and
+seat winds rotate with it. A match ends after one complete dealer rotation.
+Rooms preserve private hands and active deadlines across reconnects.
+Spectators, Riichi/Dora/Furiten/Yaku, betting, American cards, jokers, and
+multiple discard winners remain excluded.
